@@ -10,7 +10,7 @@ import {
 import type { IVariantOption } from '@/redux/features/variantOption/variantOptionApi';
 import { showError, showSuccess } from '@/lib/toast';
 
-type OptionType = 'size' | 'color' | 'material';
+type OptionType = 'size' | 'color' | 'material' | 'model';
 
 interface EditingState {
     id: string;
@@ -23,6 +23,7 @@ const TABS: { key: OptionType; label: string; accent: string }[] = [
     { key: 'size', label: 'Sizes', accent: 'bg-indigo-600' },
     { key: 'color', label: 'Colors', accent: 'bg-rose-500' },
     { key: 'material', label: 'Materials', accent: 'bg-amber-500' },
+    { key: 'model', label: 'Models', accent: 'bg-teal-500' },
 ];
 
 export default function VariantManagementPage() {
@@ -43,7 +44,9 @@ export default function VariantManagementPage() {
             ? data?.sizes || []
             : activeTab === 'color'
                 ? data?.colors || []
-                : data?.materials || [];
+                : activeTab === 'model'
+                    ? data?.models || []
+                    : data?.materials || [];
 
     const handleCreate = async () => {
         if (!newLabel.trim()) {
@@ -148,7 +151,7 @@ export default function VariantManagementPage() {
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Variant Management</h1>
                 <p className="text-sm text-gray-500 mt-1">
-                    Manage global sizes, colors, and materials that can be applied to any product.
+                    Manage global sizes, colors, materials, and models that can be applied to any product.
                 </p>
             </div>
 
@@ -174,7 +177,9 @@ export default function VariantManagementPage() {
                                     ? (data?.sizes?.length || 0)
                                     : tab.key === 'color'
                                         ? (data?.colors?.length || 0)
-                                        : (data?.materials?.length || 0)
+                                        : tab.key === 'model'
+                                            ? (data?.models?.length || 0)
+                                            : (data?.materials?.length || 0)
                                 }
                             </span>
                         </div>
@@ -187,7 +192,7 @@ export default function VariantManagementPage() {
                 <div className="flex items-center gap-3 mb-4">
                     <div className={`w-1.5 h-6 rounded-full ${currentTab.accent}`} />
                     <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">
-                        Add New {activeTab === 'size' ? 'Size' : activeTab === 'color' ? 'Color' : 'Material'}
+                        Add New {activeTab === 'size' ? 'Size' : activeTab === 'color' ? 'Color' : activeTab === 'model' ? 'Model' : 'Material'}
                     </h3>
                 </div>
 

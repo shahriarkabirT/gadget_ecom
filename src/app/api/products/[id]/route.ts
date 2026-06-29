@@ -43,7 +43,7 @@ export async function GET(request, { params }) {
             const allOptions: IVariantOptionDocument[] = await VariantOption.find({ isActive: true }).lean();
 
             // Create maps for quick order lookup (default to 999 if not found)
-            const getOrder = (type: 'size' | 'color' | 'material', label: string) => {
+            const getOrder = (type: 'size' | 'color' | 'material' | 'model', label: string) => {
                 if (!label) return 999;
                 const option = allOptions.find(o => o.type === type && o.label === label);
                 return option ? option.order : 999;
@@ -53,7 +53,7 @@ export async function GET(request, { params }) {
             const productObj = product.toObject();
 
             productObj.variants.sort((a: any, b: any) => {
-                // Primary Sort: Size -> Color -> Material
+                // Primary Sort: Size -> Color -> Material -> Model
                 const sizeOrderA = getOrder('size', a.size);
                 const sizeOrderB = getOrder('size', b.size);
                 if (sizeOrderA !== sizeOrderB) return sizeOrderA - sizeOrderB;
@@ -64,7 +64,11 @@ export async function GET(request, { params }) {
 
                 const materialOrderA = getOrder('material', a.material);
                 const materialOrderB = getOrder('material', b.material);
-                return materialOrderA - materialOrderB;
+                if (materialOrderA !== materialOrderB) return materialOrderA - materialOrderB;
+
+                const modelOrderA = getOrder('model', a.model);
+                const modelOrderB = getOrder('model', b.model);
+                return modelOrderA - modelOrderB;
             });
 
             return NextResponse.json({

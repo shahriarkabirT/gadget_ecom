@@ -15,6 +15,7 @@ export async function GET() {
             sizes: options.filter((o) => o.type === 'size'),
             colors: options.filter((o) => o.type === 'color'),
             materials: options.filter((o) => o.type === 'material'),
+            models: options.filter((o) => o.type === 'model'),
         };
 
         return NextResponse.json({ success: true, ...grouped });
@@ -41,9 +42,9 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { type, label, order, colorCode } = body;
 
-        if (!type || !['size', 'color', 'material'].includes(type)) {
+        if (!type || !['size', 'color', 'material', 'model'].includes(type)) {
             return NextResponse.json(
-                { success: false, message: 'Valid type (size, color, material) is required' },
+                { success: false, message: 'Valid type (size, color, material, model) is required' },
                 { status: 400 }
             );
         }

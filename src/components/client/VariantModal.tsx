@@ -27,7 +27,8 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
     const globalOptions = parentOptions || (reduxOptions ? {
         sizes: reduxOptions.sizes || [],
         colors: reduxOptions.colors || [],
-        materials: reduxOptions.materials || []
+        materials: reduxOptions.materials || [],
+        models: reduxOptions.models || []
     } : undefined);
 
     const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
@@ -46,7 +47,8 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
             const sizeMatch = !v.size || (selectedVariants as any)['Size'] === v.size;
             const colorMatch = !v.colorName || (selectedVariants as any)['Color'] === v.colorName;
             const materialMatch = !v.material || (selectedVariants as any)['Material'] === v.material;
-            return sizeMatch && colorMatch && materialMatch;
+            const modelMatch = !v.model || (selectedVariants as any)['Model'] === v.model;
+            return sizeMatch && colorMatch && materialMatch && modelMatch;
         });
     }, [product.variants, selectedVariants]);
 
@@ -58,6 +60,7 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
                 if (v.size) types.push('Size');
                 if (v.colorName) types.push('Color');
                 if (v.material) types.push('Material');
+                if (v.model) types.push('Model');
                 return types;
             }))
         ];
@@ -94,7 +97,8 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
         const fieldMap: Record<string, string> = {
             'Size': 'size',
             'Color': 'colorName',
-            'Material': 'material'
+            'Material': 'material',
+            'Model': 'model'
         };
         const field = fieldMap[type] || type.toLowerCase();
 
@@ -123,7 +127,7 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
 
             if (bestFit) {
                 const smartSelections: Record<string, string> = { ...selectedVariants };
-                ['Size', 'Color', 'Material'].forEach(key => {
+                ['Size', 'Color', 'Material', 'Model'].forEach(key => {
                     const keyField = fieldMap[key] || key.toLowerCase();
                     if (bestFit[keyField]) {
                         smartSelections[key] = bestFit[keyField];
@@ -265,11 +269,12 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
                     {/* Main Content Area (Variants) */}
                     <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-white">
                         <div className="space-y-6">
-                            {['Size', 'Color', 'Material'].map((variantType) => {
+                            {['Size', 'Color', 'Material', 'Model'].map((variantType) => {
                                 const fieldMap: Record<string, string> = {
                                     'Size': 'size',
                                     'Color': 'colorName',
-                                    'Material': 'material'
+                                    'Material': 'material',
+                                    'Model': 'model'
                                 };
                                 const field = fieldMap[variantType] || variantType.toLowerCase();
                                 const rawOptions = Array.from(new Set(product.variants?.map((v: any) => v[field]).filter(Boolean))) as string[];
@@ -278,7 +283,8 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
                                     if (!globalOptions) return 0;
                                     const globalList = variantType === 'Size' ? globalOptions.sizes
                                         : variantType === 'Color' ? globalOptions.colors
-                                            : globalOptions.materials;
+                                            : variantType === 'Model' ? globalOptions.models
+                                                : globalOptions.materials;
                                     if (!globalList) return 0;
                                     const orderA = globalList.find((o: any) => o.label === a)?.order ?? 999;
                                     const orderB = globalList.find((o: any) => o.label === b)?.order ?? 999;
@@ -305,7 +311,7 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
                                                     if (v[field] !== opt) return false;
                                                     return Object.entries(selectedVariants).every(([key, value]) => {
                                                         if (key === variantType) return true;
-                                                        const availFieldMap: Record<string, string> = { 'Size': 'size', 'Color': 'colorName', 'Material': 'material' };
+                                                        const availFieldMap: Record<string, string> = { 'Size': 'size', 'Color': 'colorName', 'Material': 'material', 'Model': 'model' };
                                                         const otherField = availFieldMap[key] || key.toLowerCase();
                                                         return v[otherField] === value;
                                                     });

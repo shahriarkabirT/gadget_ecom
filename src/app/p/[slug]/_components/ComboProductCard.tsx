@@ -10,6 +10,7 @@ interface Variant {
     colorName?: string;
     colorCode?: string;
     material?: string;
+    model?: string;
     price?: number;
     mrp?: number;
     stock?: number;
@@ -53,7 +54,8 @@ export default function ComboProductCard({
               const sizeMatch = !v.size || selectedVariants['Size'] === v.size;
               const colorMatch = !v.colorName || selectedVariants['Color'] === v.colorName;
               const materialMatch = !v.material || selectedVariants['Material'] === v.material;
-              return sizeMatch && colorMatch && materialMatch;
+              const modelMatch = !v.model || selectedVariants['Model'] === v.model;
+              return sizeMatch && colorMatch && materialMatch && modelMatch;
           })
         : undefined;
 
@@ -75,10 +77,15 @@ export default function ComboProductCard({
         hasVariants
             ? [...new Set(product.variants?.map((v) => v.material).filter(Boolean) as string[])]
             : [];
+    const getModels = () =>
+        hasVariants
+            ? [...new Set(product.variants?.map((v) => v.model).filter(Boolean) as string[])]
+            : [];
 
     const sizes = getSizes();
     const colors = getColors();
     const materials = getMaterials();
+    const models = getModels();
 
     const getColorCode = (colorName: string) =>
         product.variants?.find((v) => v.colorName === colorName)?.colorCode;
@@ -214,6 +221,28 @@ export default function ComboProductCard({
                                         }`}
                                     >
                                         {material}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {models.length > 0 && (
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">Model:</span>
+                            <div className="flex flex-wrap gap-2">
+                                {models.map((model) => (
+                                    <button
+                                        key={model}
+                                        type="button"
+                                        onClick={() => onVariantChange('Model', model)}
+                                        className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
+                                            selectedVariants['Model'] === model
+                                                ? 'bg-gray-900 border-gray-900 text-white shadow-md'
+                                                : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        {model}
                                     </button>
                                 ))}
                             </div>

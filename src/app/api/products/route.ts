@@ -136,6 +136,7 @@ export async function GET(request: any) {
                 { shortDescription: { $regex: search, $options: 'i' } },
                 { 'variants.size': { $regex: search, $options: 'i' } },
                 { 'variants.material': { $regex: search, $options: 'i' } },
+                { 'variants.model': { $regex: search, $options: 'i' } },
                 { sku: { $regex: search, $options: 'i' } },
                 { 'variants.sku': { $regex: search, $options: 'i' } },
             ];
@@ -145,11 +146,13 @@ export async function GET(request: any) {
         const size = searchParams.get('size');
         const color = searchParams.get('color');
         const material = searchParams.get('material');
+        const model = searchParams.get('model');
         const minPrice = searchParams.get('minPrice');
         const maxPrice = searchParams.get('maxPrice');
         if (size) query['variants.size'] = size;
         if (color) query['variants.color'] = color;
         if (material) query['variants.material'] = material;
+        if (model) query['variants.model'] = model;
 
         // Filter by brand
         const brand = searchParams.get('brand');

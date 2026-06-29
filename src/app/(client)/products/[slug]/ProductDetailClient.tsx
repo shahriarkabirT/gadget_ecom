@@ -50,7 +50,8 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
         const sizeMatch = !v.size || selectedVariants['Size'] === v.size;
         const colorMatch = !v.colorName || selectedVariants['Color'] === v.colorName;
         const materialMatch = !v.material || selectedVariants['Material'] === v.material;
-        return sizeMatch && colorMatch && materialMatch;
+        const modelMatch = !v.model || selectedVariants['Model'] === v.model;
+        return sizeMatch && colorMatch && materialMatch && modelMatch;
     });
     const currentMrp = activeVariant?.mrp || product?.mrp || product?.price || 0;
     const currentDiscountValue = (activeVariant && activeVariant.discountValue !== undefined) ? activeVariant.discountValue : (product?.discountValue || 0);
@@ -98,6 +99,7 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
             if (v.size) types.push('Size');
             if (v.colorName) types.push('Color');
             if (v.material) types.push('Material');
+            if (v.model) types.push('Model');
             return types;
         }))]
         : [];
@@ -123,7 +125,7 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
             setSelectedVariants(updated);
             return;
         }
-        const fieldMap: Record<string, string> = { 'Size': 'size', 'Color': 'colorName', 'Material': 'material' };
+        const fieldMap: Record<string, string> = { 'Size': 'size', 'Color': 'colorName', 'Material': 'material', 'Model': 'model' };
         const field = fieldMap[type] || type.toLowerCase();
         const nextSelections = { ...selectedVariants, [type]: value };
 
@@ -143,7 +145,7 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
             const bestFit = product.variants?.find((v: any) => v[field] === value);
             if (bestFit) {
                 const smart: Record<string, string> = { ...selectedVariants };
-                ['Size', 'Color', 'Material'].forEach(k => {
+                ['Size', 'Color', 'Material', 'Model'].forEach(k => {
                     const kf = fieldMap[k] || k.toLowerCase();
                     if (bestFit[kf]) smart[k] = bestFit[kf];
                 });
@@ -219,12 +221,12 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
     // Variant selector JSX (inline — stays in orchestrator since it needs local state)
     const variantSlot = product.variants?.length > 0 ? (
         <div className="space-y-2 lg:space-y-4 pt-1 lg:pt-2">
-            {(['Size', 'Color', 'Material'] as const).map(variantType => {
-                const fieldMap: Record<string, string> = { 'Size': 'size', 'Color': 'colorName', 'Material': 'material' };
+            {(['Size', 'Color', 'Material', 'Model'] as const).map(variantType => {
+                const fieldMap: Record<string, string> = { 'Size': 'size', 'Color': 'colorName', 'Material': 'material', 'Model': 'model' };
                 const field = fieldMap[variantType];
                 const rawOptions = [...new Set(product.variants?.map((v: any) => v[field]).filter(Boolean))] as string[];
                 const options = [...rawOptions].sort((a, b) => {
-                    const list = variantType === 'Size' ? globalOptions?.sizes : variantType === 'Color' ? globalOptions?.colors : globalOptions?.materials;
+                    const list = variantType === 'Size' ? globalOptions?.sizes : variantType === 'Color' ? globalOptions?.colors : variantType === 'Model' ? globalOptions?.models : globalOptions?.materials;
                     const oA = list?.find((o: any) => o.label === a)?.order ?? 999;
                     const oB = list?.find((o: any) => o.label === b)?.order ?? 999;
                     return oA - oB;

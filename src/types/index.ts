@@ -12,6 +12,7 @@ export interface IVariant {
     colorName?: string;
     colorCode?: string;
     material?: string;
+    model?: string;
     mrp: number;
     price: number;
     /** Optional cost per unit for profit analytics */
@@ -30,7 +31,7 @@ export interface IVariant {
 
 export interface IVariantOption {
     _id: string;
-    type: 'size' | 'color' | 'material';
+    type: 'size' | 'color' | 'material' | 'model';
     label: string;
     order: number;
     colorCode?: string;

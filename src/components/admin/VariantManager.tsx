@@ -38,12 +38,14 @@ function generateSku(
     baseSku: string,
     size?: string,
     colorName?: string,
-    material?: string
+    material?: string,
+    model?: string
 ): string {
     const parts = [baseSku || 'VAR'];
     if (size) parts.push(skuSlug(size));
     if (colorName) parts.push(skuSlug(colorName));
     if (material) parts.push(skuSlug(material));
+    if (model) parts.push(skuSlug(model));
     return parts.join('-');
 }
 
@@ -54,24 +56,29 @@ function generateSku(
 function cartesianProduct(
     sizes: IVariantOption[],
     colors: IVariantOption[],
-    materials: IVariantOption[]
-): { size?: string; colorName?: string; colorCode?: string; material?: string }[] {
+    materials: IVariantOption[],
+    models: IVariantOption[]
+): { size?: string; colorName?: string; colorCode?: string; material?: string; model?: string }[] {
     // Handle cases where some dimensions are empty
     const sArr = sizes.length > 0 ? sizes : [null];
     const cArr = colors.length > 0 ? colors : [null];
     const mArr = materials.length > 0 ? materials : [null];
+    const mdArr = models.length > 0 ? models : [null];
 
-    const combos: { size?: string; colorName?: string; colorCode?: string; material?: string }[] = [];
+    const combos: { size?: string; colorName?: string; colorCode?: string; material?: string; model?: string }[] = [];
 
     for (const s of sArr) {
         for (const c of cArr) {
             for (const m of mArr) {
-                combos.push({
-                    size: s?.label,
-                    colorName: c?.label,
-                    colorCode: c?.colorCode,
-                    material: m?.label,
-                });
+                for (const md of mdArr) {
+                    combos.push({
+                        size: s?.label,
+                        colorName: c?.label,
+                        colorCode: c?.colorCode,
+                        material: m?.label,
+                        model: md?.label,
+                    });
+                }
             }
         }
     }
@@ -79,8 +86,8 @@ function cartesianProduct(
     return combos;
 }
 
-function comboKey(v: { size?: string; colorName?: string; material?: string }): string {
-    return `${v.size || ''}|${v.colorName || ''}|${v.material || ''}`;
+function comboKey(v: { size?: string; colorName?: string; material?: string; model?: string }): string {
+    return `${v.size || ''}|${v.colorName || ''}|${v.material || ''}|${v.model || ''}`;
 }
 
 export default function VariantManager({
@@ -101,11 +108,13 @@ export default function VariantManager({
     const allSizes = useMemo(() => [...(optionsData?.sizes || [])].sort((a, b) => a.order - b.order), [optionsData?.sizes]);
     const allColors = useMemo(() => [...(optionsData?.colors || [])].sort((a, b) => a.order - b.order), [optionsData?.colors]);
     const allMaterials = useMemo(() => [...(optionsData?.materials || [])].sort((a, b) => a.order - b.order), [optionsData?.materials]);
+    const allModels = useMemo(() => [...(optionsData?.models || [])].sort((a, b) => a.order - b.order), [optionsData?.models]);
 
     // Track selected option IDs
     const [selectedSizeIds, setSelectedSizeIds] = useState<Set<string>>(new Set());
     const [selectedColorIds, setSelectedColorIds] = useState<Set<string>>(new Set());
     const [selectedMaterialIds, setSelectedMaterialIds] = useState<Set<string>>(new Set());
+    const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
 
     // Track manually removed combo keys (so they don't reappear)
     const [removedKeys, setRemovedKeys] = useState<Set<string>>(new Set());
@@ -115,10 +124,11 @@ export default function VariantManager({
 
     // Initialize selections from existing variants on mount
     useEffect(() => {
-        if (variants.length > 0 && allSizes.length + allColors.length + allMaterials.length > 0) {
+        if (variants.length > 0 && allSizes.length + allColors.length + allMaterials.length + allModels.length > 0) {
             const sIds = new Set<string>();
             const cIds = new Set<string>();
             const mIds = new Set<string>();
+            const mdIds = new Set<string>();
 
             for (const v of variants) {
                 if (v.size) {
@@ -133,15 +143,20 @@ export default function VariantManager({
                     const match = allMaterials.find((m) => m.label === v.material);
                     if (match) mIds.add(match._id);
                 }
+                if (v.model) {
+                    const match = allModels.find((md) => md.label === v.model);
+                    if (match) mdIds.add(match._id);
+                }
             }
 
             if (sIds.size > 0) setSelectedSizeIds(sIds);
             if (cIds.size > 0) setSelectedColorIds(cIds);
             if (mIds.size > 0) setSelectedMaterialIds(mIds);
+            if (mdIds.size > 0) setSelectedModelIds(mdIds);
         }
         // Only run once when options load
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [allSizes.length, allColors.length, allMaterials.length]);
+    }, [allSizes.length, allColors.length, allMaterials.length, allModels.length]);
 
     // Get selected options objects
     const selectedSizes = useMemo(
@@ -156,16 +171,20 @@ export default function VariantManager({
         () => allMaterials.filter((m) => selectedMaterialIds.has(m._id)),
         [allMaterials, selectedMaterialIds]
     );
+    const selectedModels = useMemo(
+        () => allModels.filter((md) => selectedModelIds.has(md._id)),
+        [allModels, selectedModelIds]
+    );
 
     // When selections change, generate cartesian product and merge with existing variants
     useEffect(() => {
-        if (selectedSizes.length === 0 && selectedColors.length === 0 && selectedMaterials.length === 0) {
+        if (selectedSizes.length === 0 && selectedColors.length === 0 && selectedMaterials.length === 0 && selectedModels.length === 0) {
             // No selections — clear all variants that came from matrix
             // But keep any manually-added variants that don't match our pattern
             return;
         }
 
-        const combos = cartesianProduct(selectedSizes, selectedColors, selectedMaterials);
+        const combos = cartesianProduct(selectedSizes, selectedColors, selectedMaterials, selectedModels);
 
         // Build a map of existing variants by combo key for preservation
         const existingMap = new Map<string, IVariant>();
@@ -190,7 +209,8 @@ export default function VariantManager({
                     colorName: combo.colorName,
                     colorCode: combo.colorCode,
                     material: combo.material,
-                    sku: generateSku(baseSku, combo.size, combo.colorName, combo.material),
+                    model: combo.model,
+                    sku: generateSku(baseSku, combo.size, combo.colorName, combo.material, combo.model),
                     stock: 0,
                     weight: null,
                     mrp: defaultMrp,
@@ -213,16 +233,18 @@ export default function VariantManager({
             onChange(newVariants);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedSizes, selectedColors, selectedMaterials, removedKeys]);
+    }, [selectedSizes, selectedColors, selectedMaterials, selectedModels, removedKeys]);
 
     const toggleSelection = useCallback(
-        (type: 'size' | 'color' | 'material', id: string) => {
+        (type: 'size' | 'color' | 'material' | 'model', id: string) => {
             const setFn =
                 type === 'size'
                     ? setSelectedSizeIds
                     : type === 'color'
                         ? setSelectedColorIds
-                        : setSelectedMaterialIds;
+                        : type === 'material'
+                            ? setSelectedMaterialIds
+                            : setSelectedModelIds;
 
             setFn((prev) => {
                 const next = new Set(prev);
@@ -377,7 +399,7 @@ export default function VariantManager({
         );
     }
 
-    const hasNoOptions = allSizes.length === 0 && allColors.length === 0 && allMaterials.length === 0;
+    const hasNoOptions = allSizes.length === 0 && allColors.length === 0 && allMaterials.length === 0 && allModels.length === 0;
 
     return (
         <div className="space-y-6">
@@ -479,6 +501,33 @@ export default function VariantManager({
                                 </div>
                             </div>
                         )}
+
+                        {/* Models Row */}
+                        {allModels.length > 0 && (
+                            <div>
+                                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+                                    Models
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {allModels.map((md) => {
+                                        const isSelected = selectedModelIds.has(md._id);
+                                        return (
+                                            <button
+                                                key={md._id}
+                                                type="button"
+                                                onClick={() => toggleSelection('model', md._id)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition-all ${isSelected
+                                                    ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
+                                                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {md.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Generated Variant Count */}
@@ -544,7 +593,7 @@ export default function VariantManager({
                                             />
                                         )}
                                         <span className="text-xs font-bold text-gray-900">
-                                            {[variant.size, variant.colorName, variant.material]
+                                            {[variant.size, variant.colorName, variant.material, variant.model]
                                                 .filter(Boolean)
                                                 .join(' / ')}
                                         </span>
@@ -856,7 +905,7 @@ export default function VariantManager({
 
                     {/* Empty state when selections made but all removed */}
                     {variants.length === 0 &&
-                        (selectedSizeIds.size > 0 || selectedColorIds.size > 0 || selectedMaterialIds.size > 0) && (
+                        (selectedSizeIds.size > 0 || selectedColorIds.size > 0 || selectedMaterialIds.size > 0 || selectedModelIds.size > 0) && (
                             <div className="text-center py-6 text-gray-400 text-xs">
                                 All generated variants have been removed. Adjust your selections above.
                             </div>
@@ -866,10 +915,11 @@ export default function VariantManager({
                     {variants.length === 0 &&
                         selectedSizeIds.size === 0 &&
                         selectedColorIds.size === 0 &&
-                        selectedMaterialIds.size === 0 && (
+                        selectedMaterialIds.size === 0 &&
+                        selectedModelIds.size === 0 && (
                             <div className="text-center py-8 bg-white rounded-xl border border-dashed border-gray-300">
                                 <p className="text-xs font-bold text-gray-500">
-                                    Select sizes, colors, or materials above to generate variant combinations.
+                                    Select sizes, colors, materials, or models above to generate variant combinations.
                                 </p>
                             </div>
                         )}

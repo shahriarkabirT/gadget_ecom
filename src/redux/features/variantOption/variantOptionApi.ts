@@ -2,7 +2,7 @@ import { apiSlice } from '../../api/apiSlice';
 
 export interface IVariantOption {
     _id: string;
-    type: 'size' | 'color' | 'material';
+    type: 'size' | 'color' | 'material' | 'model';
     label: string;
     order: number;
     colorCode?: string;
@@ -14,6 +14,7 @@ interface VariantOptionsResponse {
     sizes: IVariantOption[];
     colors: IVariantOption[];
     materials: IVariantOption[];
+    models: IVariantOption[];
 }
 
 export const variantOptionApi = apiSlice.injectEndpoints({

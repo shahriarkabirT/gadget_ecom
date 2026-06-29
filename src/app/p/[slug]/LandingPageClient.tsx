@@ -56,7 +56,9 @@ function getProductPrice(p: any): number {
         !v.colorName || p.selectedVariants?.["Color"] === v.colorName;
       const materialMatch =
         !v.material || p.selectedVariants?.["Material"] === v.material;
-      return sizeMatch && colorMatch && materialMatch;
+      const modelMatch =
+        !v.model || p.selectedVariants?.["Model"] === v.model;
+      return sizeMatch && colorMatch && materialMatch && modelMatch;
     });
     if (activeVariant?.price && activeVariant.price > 0) return activeVariant.price;
   }
@@ -87,6 +89,7 @@ function getRequiredVariantTypes(p: any): string[] {
         if (v.size) types.push("Size");
         if (v.colorName) types.push("Color");
         if (v.material) types.push("Material");
+        if (v.model) types.push("Model");
         return types;
       }),
     ),

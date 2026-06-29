@@ -52,6 +52,7 @@ export default function ExportProducts({ status, search, category }: ExportProdu
                 'Variant Size',
                 'Variant Color',
                 'Variant Material',
+                'Variant Model',
                 'Variant MRP',
                 'Variant Price',
                 'Variant Stock'
@@ -82,6 +83,7 @@ export default function ExportProducts({ status, search, category }: ExportProdu
                             `"${(v.size || '').replace(/"/g, '""')}"`,
                             `"${(v.colorName || '').replace(/"/g, '""')}"`,
                             `"${(v.material || '').replace(/"/g, '""')}"`,
+                            `"${(v.model || '').replace(/"/g, '""')}"`,
                             v.mrp?.toString() || '0',
                             v.price?.toString() || '0',
                             v.stock?.toString() || '0'
@@ -95,6 +97,7 @@ export default function ExportProducts({ status, search, category }: ExportProdu
                         '', // Variant Size
                         '', // Variant Color
                         '', // Variant Material
+                        '', // Variant Model
                         '', // Variant MRP
                         '', // Variant Price
                         ''  // Variant Stock

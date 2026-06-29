@@ -110,6 +110,7 @@ const ProductSchema = new Schema<IProductDocument>(
                 colorName: String,
                 colorCode: String,
                 material: String,
+                model: String,
                 mrp: { type: Number, default: 0 },
                 price: { type: Number, default: 0 },
                 discountType: { type: String, enum: ['flat', 'percentage'], default: 'percentage' },

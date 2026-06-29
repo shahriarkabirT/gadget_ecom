@@ -205,7 +205,8 @@ export async function POST(request: NextRequest) {
                     const sizeMatch = !v.size || item.variant['Size'] === v.size;
                     const colorMatch = !v.colorName || item.variant['Color'] === v.colorName;
                     const materialMatch = !v.material || item.variant['Material'] === v.material;
-                    return sizeMatch && colorMatch && materialMatch;
+                    const modelMatch = !v.model || item.variant['Model'] === v.model;
+                    return sizeMatch && colorMatch && materialMatch && modelMatch;
                 });
 
                 if (!variant) {

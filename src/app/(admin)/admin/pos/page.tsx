@@ -310,7 +310,8 @@ export default function POSTerminal() {
                 variant: item.selectedVariant ? { 
                     Size: item.selectedVariant.size, 
                     Color: item.selectedVariant.colorName,
-                    Material: item.selectedVariant.material
+                    Material: item.selectedVariant.material,
+                    Model: item.selectedVariant.model
                 } : {}
             }));
 
@@ -685,7 +686,7 @@ export default function POSTerminal() {
                                     >
                                         <div>
                                             <div className="font-semibold text-sm flex items-center gap-2">
-                                                {Object.values({s: variant.size, c: variant.colorName, m: variant.material})
+                                                {Object.values({s: variant.size, c: variant.colorName, m: variant.material, md: variant.model})
                                                     .filter(Boolean).join(' / ') || 'Default Variant'}
                                                 {!inStock && <span className="text-[9px] uppercase tracking-wider bg-[var(--pos-danger)] text-white px-1.5 py-0.5 rounded font-bold">Out of stock</span>}
                                             </div>
