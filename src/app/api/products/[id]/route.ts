@@ -142,6 +142,7 @@ export async function PUT(request, { params }) {
             productType,
             isFeatured,
             productCost,
+            compatibleModels,
         } = body;
 
         // Validation Logic for Updates
@@ -247,6 +248,7 @@ export async function PUT(request, { params }) {
         if (shortDescription !== undefined) product.shortDescription = shortDescription;
         if (fullDescription !== undefined) product.fullDescription = fullDescription;
         if (sizeGuide !== undefined) product.sizeGuide = sizeGuide;
+        if (compatibleModels !== undefined) product.compatibleModels = compatibleModels;
         if (variants !== undefined) {
             // Sanitize variant _ids: remove empty/invalid _id so Mongoose auto-generates them
             product.variants = variants.map((v: any) => {

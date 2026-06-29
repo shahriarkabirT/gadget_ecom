@@ -134,6 +134,10 @@ const ProductSchema = new Schema<IProductDocument>(
             type: [String],
             default: [],
         },
+        compatibleModels: {
+            type: [String],
+            default: [],
+        },
         seoMetadata: {
             metaTitle: String,
             metaDescription: String,

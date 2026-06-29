@@ -44,6 +44,7 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
 
     const [quantity, setQuantity] = useState(1);
     const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+    const [selectedModel, setSelectedModel] = useState<string>('');
     
     // --- Move Price Calculation Up for Hook Safety ---
     const activeVariant = product?.variants?.find((v: any) => {
@@ -104,7 +105,7 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
         }))]
         : [];
 
-    const missingSelection = (requiredOptions as string[]).find(t => !(selectedVariants as any)[t]);
+    const missingSelection = (requiredOptions as string[]).find(t => !(selectedVariants as any)[t]) || (product.compatibleModels?.length > 0 && !selectedModel ? 'Model' : undefined);
     const isSelectionComplete = !missingSelection;
 
     const contactPhone = settingsData?.settings?.contactPhone || '';
@@ -163,6 +164,7 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
     const handleAddToCart = () => {
         if (!isSelectionComplete) { setSelectionError({ type: missingSelection!, source: 'cart' }); return; }
         const variantToSync: any = { ...selectedVariants };
+        if (selectedModel) variantToSync['Model'] = selectedModel;
         if (activeVariant?.colorCode) variantToSync.colorCode = activeVariant.colorCode;
         if (activeVariant?.tax !== undefined) variantToSync.tax = activeVariant.tax;
         addToCart({
@@ -197,6 +199,7 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
     const handleBuyNow = () => {
         if (!isSelectionComplete) { setSelectionError({ type: missingSelection!, source: 'buy' }); return; }
         const variantToSync: any = { ...selectedVariants };
+        if (selectedModel) variantToSync['Model'] = selectedModel;
         if (activeVariant?.colorCode) variantToSync.colorCode = activeVariant.colorCode;
         if (activeVariant?.tax !== undefined) variantToSync.tax = activeVariant.tax;
         sessionStorage.setItem('directBuyItem', JSON.stringify([{
@@ -287,6 +290,37 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
         </div>
     ) : null;
 
+    const compatibleModelSlot = product.compatibleModels?.length > 0 ? (
+        <div className="space-y-2 lg:space-y-4 pt-1 lg:pt-2">
+            <div>
+                <div className="flex items-center gap-2 mb-1 lg:mb-2">
+                    <span className="text-[10px] lg:text-xs font-black text-gray-700 uppercase tracking-wide">Select Your Model List</span>
+                    {selectedModel && (
+                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{selectedModel}</span>
+                    )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {product.compatibleModels.map((opt: string) => {
+                        const isSelected = selectedModel === opt;
+                        return (
+                            <button
+                                key={opt}
+                                onClick={() => {
+                                    setSelectionError(null);
+                                    setSelectedModel(isSelected ? '' : opt);
+                                }}
+                                title={opt}
+                                className={`relative transition-all px-2 lg:px-3 py-1 lg:py-1.5 rounded border text-[11px] lg:text-xs font-bold ${isSelected ? 'border-orange-500 bg-orange-500 text-white' : 'border-gray-200 text-gray-700 hover:border-orange-400'}`}
+                            >
+                                {opt}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    ) : null;
+
     const categoryId = product.category?._id || product.category;
     const subCategoryId = product.subCategory?._id || product.subCategory;
     const childCategoryId = product.childCategory?._id || product.childCategory;
@@ -351,7 +385,12 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
                             onWishlistToggle={() => isInWishlist(product._id) ? removeFromWishlist(product._id) : addToWishlist(product._id)}
                             whatsappNumber={whatsappNumber}
                             contactPhone={contactPhone}
-                            variantSlot={variantSlot}
+                            variantSlot={
+                                <>
+                                    {variantSlot}
+                                    {compatibleModelSlot}
+                                </>
+                            }
                         />
                     </div>
 

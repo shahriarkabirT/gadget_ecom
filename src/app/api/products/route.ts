@@ -235,6 +235,7 @@ export async function POST(request) {
             productType,
             isFeatured,
             productCost,
+            compatibleModels,
         } = body;
 
         // Validation Logic
@@ -348,6 +349,7 @@ export async function POST(request) {
             shortDescription,
             fullDescription,
             sizeGuide: sizeGuide || undefined,
+            compatibleModels: compatibleModels || [],
             variants: sanitizedVariants,
             sku,
             tags: tags || [],

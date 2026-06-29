@@ -24,6 +24,7 @@ interface Product {
     mrp?: number;
     images?: string[];
     variants?: Variant[];
+    compatibleModels?: string[];
     productType?: 'single' | 'variant';
     shortDescription?: string;
 }
@@ -47,6 +48,7 @@ export default function ComboProductCard({
     singleMode = false,
 }: ComboProductCardProps) {
     const hasVariants = product.productType === 'variant' && (product.variants?.length ?? 0) > 0;
+    const hasOptions = hasVariants || (product.compatibleModels?.length ?? 0) > 0;
 
     // Determine active variant
     const activeVariant = hasVariants
@@ -154,7 +156,7 @@ export default function ComboProductCard({
                 </div>
             </div>
 
-            {hasVariants && isSelected && (
+            {hasOptions && isSelected && (
                 <div className="px-12 md:px-16 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
                     {/* Color Swatches */}
                     {colors.length > 0 && (
@@ -232,6 +234,28 @@ export default function ComboProductCard({
                             <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">Model:</span>
                             <div className="flex flex-wrap gap-2">
                                 {models.map((model) => (
+                                    <button
+                                        key={model}
+                                        type="button"
+                                        onClick={() => onVariantChange('Model', model)}
+                                        className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
+                                            selectedVariants['Model'] === model
+                                                ? 'bg-gray-900 border-gray-900 text-white shadow-md'
+                                                : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        {model}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {(product.compatibleModels?.length ?? 0) > 0 && (
+                        <div className="flex items-start gap-3 flex-col mt-2">
+                            <span className="text-[10px] font-black uppercase text-gray-400">Select Model:</span>
+                            <div className="flex flex-wrap gap-2">
+                                {product.compatibleModels!.map((model) => (
                                     <button
                                         key={model}
                                         type="button"

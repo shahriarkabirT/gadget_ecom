@@ -69,6 +69,7 @@ export interface IProduct {
     variants: IVariant[];
     sku?: string;
     tags: string[];
+    compatibleModels?: string[];
     seoMetadata?: ISEOMetadata;
     averageRating: number;
     reviewCount: number;
