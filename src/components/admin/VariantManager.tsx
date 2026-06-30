@@ -39,13 +39,15 @@ function generateSku(
     size?: string,
     colorName?: string,
     material?: string,
-    model?: string
+    ram?: string,
+    storage?: string
 ): string {
     const parts = [baseSku || 'VAR'];
     if (size) parts.push(skuSlug(size));
     if (colorName) parts.push(skuSlug(colorName));
     if (material) parts.push(skuSlug(material));
-    if (model) parts.push(skuSlug(model));
+    if (ram) parts.push(skuSlug(ram));
+    if (storage) parts.push(skuSlug(storage));
     return parts.join('-');
 }
 
@@ -57,27 +59,32 @@ function cartesianProduct(
     sizes: IVariantOption[],
     colors: IVariantOption[],
     materials: IVariantOption[],
-    models: IVariantOption[]
-): { size?: string; colorName?: string; colorCode?: string; material?: string; model?: string }[] {
+    rams: IVariantOption[],
+    storages: IVariantOption[]
+): { size?: string; colorName?: string; colorCode?: string; material?: string; ram?: string; storage?: string }[] {
     // Handle cases where some dimensions are empty
     const sArr = sizes.length > 0 ? sizes : [null];
     const cArr = colors.length > 0 ? colors : [null];
     const mArr = materials.length > 0 ? materials : [null];
-    const mdArr = models.length > 0 ? models : [null];
+    const rArr = rams.length > 0 ? rams : [null];
+    const stArr = storages.length > 0 ? storages : [null];
 
-    const combos: { size?: string; colorName?: string; colorCode?: string; material?: string; model?: string }[] = [];
+    const combos: { size?: string; colorName?: string; colorCode?: string; material?: string; ram?: string; storage?: string }[] = [];
 
     for (const s of sArr) {
         for (const c of cArr) {
             for (const m of mArr) {
-                for (const md of mdArr) {
-                    combos.push({
-                        size: s?.label,
-                        colorName: c?.label,
-                        colorCode: c?.colorCode,
-                        material: m?.label,
-                        model: md?.label,
-                    });
+                for (const r of rArr) {
+                    for (const st of stArr) {
+                        combos.push({
+                            size: s?.label,
+                            colorName: c?.label,
+                            colorCode: c?.colorCode,
+                            material: m?.label,
+                            ram: r?.label,
+                            storage: st?.label,
+                        });
+                    }
                 }
             }
         }
@@ -86,8 +93,8 @@ function cartesianProduct(
     return combos;
 }
 
-function comboKey(v: { size?: string; colorName?: string; material?: string; model?: string }): string {
-    return `${v.size || ''}|${v.colorName || ''}|${v.material || ''}|${v.model || ''}`;
+function comboKey(v: { size?: string; colorName?: string; material?: string; ram?: string; storage?: string }): string {
+    return `${v.size || ''}|${v.colorName || ''}|${v.material || ''}|${v.ram || ''}|${v.storage || ''}`;
 }
 
 export default function VariantManager({
@@ -108,13 +115,15 @@ export default function VariantManager({
     const allSizes = useMemo(() => [...(optionsData?.sizes || [])].sort((a, b) => a.order - b.order), [optionsData?.sizes]);
     const allColors = useMemo(() => [...(optionsData?.colors || [])].sort((a, b) => a.order - b.order), [optionsData?.colors]);
     const allMaterials = useMemo(() => [...(optionsData?.materials || [])].sort((a, b) => a.order - b.order), [optionsData?.materials]);
-    const allModels = useMemo(() => [...(optionsData?.models || [])].sort((a, b) => a.order - b.order), [optionsData?.models]);
+    const allRams = useMemo(() => [...(optionsData?.rams || [])].sort((a, b) => a.order - b.order), [optionsData?.rams]);
+    const allStorages = useMemo(() => [...(optionsData?.storages || [])].sort((a, b) => a.order - b.order), [optionsData?.storages]);
 
     // Track selected option IDs
     const [selectedSizeIds, setSelectedSizeIds] = useState<Set<string>>(new Set());
     const [selectedColorIds, setSelectedColorIds] = useState<Set<string>>(new Set());
     const [selectedMaterialIds, setSelectedMaterialIds] = useState<Set<string>>(new Set());
-    const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
+    const [selectedRamIds, setSelectedRamIds] = useState<Set<string>>(new Set());
+    const [selectedStorageIds, setSelectedStorageIds] = useState<Set<string>>(new Set());
 
     // Track manually removed combo keys (so they don't reappear)
     const [removedKeys, setRemovedKeys] = useState<Set<string>>(new Set());
@@ -124,11 +133,12 @@ export default function VariantManager({
 
     // Initialize selections from existing variants on mount
     useEffect(() => {
-        if (variants.length > 0 && allSizes.length + allColors.length + allMaterials.length + allModels.length > 0) {
+        if (variants.length > 0 && allSizes.length + allColors.length + allMaterials.length + allRams.length + allStorages.length > 0) {
             const sIds = new Set<string>();
             const cIds = new Set<string>();
             const mIds = new Set<string>();
-            const mdIds = new Set<string>();
+            const rIds = new Set<string>();
+            const stIds = new Set<string>();
 
             for (const v of variants) {
                 if (v.size) {
@@ -143,20 +153,25 @@ export default function VariantManager({
                     const match = allMaterials.find((m) => m.label === v.material);
                     if (match) mIds.add(match._id);
                 }
-                if (v.model) {
-                    const match = allModels.find((md) => md.label === v.model);
-                    if (match) mdIds.add(match._id);
+                if (v.ram) {
+                    const match = allRams.find((r) => r.label === v.ram);
+                    if (match) rIds.add(match._id);
+                }
+                if (v.storage) {
+                    const match = allStorages.find((st) => st.label === v.storage);
+                    if (match) stIds.add(match._id);
                 }
             }
 
             if (sIds.size > 0) setSelectedSizeIds(sIds);
             if (cIds.size > 0) setSelectedColorIds(cIds);
             if (mIds.size > 0) setSelectedMaterialIds(mIds);
-            if (mdIds.size > 0) setSelectedModelIds(mdIds);
+            if (rIds.size > 0) setSelectedRamIds(rIds);
+            if (stIds.size > 0) setSelectedStorageIds(stIds);
         }
         // Only run once when options load
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [allSizes.length, allColors.length, allMaterials.length, allModels.length]);
+    }, [allSizes.length, allColors.length, allMaterials.length, allRams.length, allStorages.length]);
 
     // Get selected options objects
     const selectedSizes = useMemo(
@@ -171,20 +186,24 @@ export default function VariantManager({
         () => allMaterials.filter((m) => selectedMaterialIds.has(m._id)),
         [allMaterials, selectedMaterialIds]
     );
-    const selectedModels = useMemo(
-        () => allModels.filter((md) => selectedModelIds.has(md._id)),
-        [allModels, selectedModelIds]
+    const selectedRams = useMemo(
+        () => allRams.filter((r) => selectedRamIds.has(r._id)),
+        [allRams, selectedRamIds]
+    );
+    const selectedStorages = useMemo(
+        () => allStorages.filter((st) => selectedStorageIds.has(st._id)),
+        [allStorages, selectedStorageIds]
     );
 
     // When selections change, generate cartesian product and merge with existing variants
     useEffect(() => {
-        if (selectedSizes.length === 0 && selectedColors.length === 0 && selectedMaterials.length === 0 && selectedModels.length === 0) {
+        if (selectedSizes.length === 0 && selectedColors.length === 0 && selectedMaterials.length === 0 && selectedRams.length === 0 && selectedStorages.length === 0) {
             // No selections — clear all variants that came from matrix
             // But keep any manually-added variants that don't match our pattern
             return;
         }
 
-        const combos = cartesianProduct(selectedSizes, selectedColors, selectedMaterials, selectedModels);
+        const combos = cartesianProduct(selectedSizes, selectedColors, selectedMaterials, selectedRams, selectedStorages);
 
         // Build a map of existing variants by combo key for preservation
         const existingMap = new Map<string, IVariant>();
@@ -209,8 +228,9 @@ export default function VariantManager({
                     colorName: combo.colorName,
                     colorCode: combo.colorCode,
                     material: combo.material,
-                    model: combo.model,
-                    sku: generateSku(baseSku, combo.size, combo.colorName, combo.material, combo.model),
+                    ram: combo.ram,
+                    storage: combo.storage,
+                    sku: generateSku(baseSku, combo.size, combo.colorName, combo.material, combo.ram, combo.storage),
                     stock: 0,
                     weight: null,
                     mrp: defaultMrp,
@@ -233,10 +253,10 @@ export default function VariantManager({
             onChange(newVariants);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedSizes, selectedColors, selectedMaterials, selectedModels, removedKeys]);
+    }, [selectedSizes, selectedColors, selectedMaterials, selectedRams, selectedStorages, removedKeys]);
 
     const toggleSelection = useCallback(
-        (type: 'size' | 'color' | 'material' | 'model', id: string) => {
+        (type: 'size' | 'color' | 'material' | 'ram' | 'storage', id: string) => {
             const setFn =
                 type === 'size'
                     ? setSelectedSizeIds
@@ -244,7 +264,9 @@ export default function VariantManager({
                         ? setSelectedColorIds
                         : type === 'material'
                             ? setSelectedMaterialIds
-                            : setSelectedModelIds;
+                            : type === 'ram'
+                                ? setSelectedRamIds
+                                : setSelectedStorageIds;
 
             setFn((prev) => {
                 const next = new Set(prev);
@@ -399,7 +421,7 @@ export default function VariantManager({
         );
     }
 
-    const hasNoOptions = allSizes.length === 0 && allColors.length === 0 && allMaterials.length === 0 && allModels.length === 0;
+    const hasNoOptions = allSizes.length === 0 && allColors.length === 0 && allMaterials.length === 0 && allRams.length === 0 && allStorages.length === 0;
 
     return (
         <div className="space-y-6">
@@ -502,26 +524,53 @@ export default function VariantManager({
                             </div>
                         )}
 
-                        {/* Models Row */}
-                        {allModels.length > 0 && (
+                        {/* Rams Row */}
+                        {allRams.length > 0 && (
                             <div>
                                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
-                                    Models
+                                    RAM
                                 </label>
                                 <div className="flex flex-wrap gap-2">
-                                    {allModels.map((md) => {
-                                        const isSelected = selectedModelIds.has(md._id);
+                                    {allRams.map((r) => {
+                                        const isSelected = selectedRamIds.has(r._id);
                                         return (
                                             <button
-                                                key={md._id}
+                                                key={r._id}
                                                 type="button"
-                                                onClick={() => toggleSelection('model', md._id)}
+                                                onClick={() => toggleSelection('ram', r._id)}
                                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition-all ${isSelected
                                                     ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
                                                     : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
                                                     }`}
                                             >
-                                                {md.label}
+                                                {r.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Storages Row */}
+                        {allStorages.length > 0 && (
+                            <div>
+                                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+                                    Storage
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {allStorages.map((st) => {
+                                        const isSelected = selectedStorageIds.has(st._id);
+                                        return (
+                                            <button
+                                                key={st._id}
+                                                type="button"
+                                                onClick={() => toggleSelection('storage', st._id)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition-all ${isSelected
+                                                    ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
+                                                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {st.label}
                                             </button>
                                         );
                                     })}
@@ -593,7 +642,7 @@ export default function VariantManager({
                                             />
                                         )}
                                         <span className="text-xs font-bold text-gray-900">
-                                            {[variant.size, variant.colorName, variant.material, variant.model]
+                                            {[variant.size, variant.colorName, variant.material, variant.ram, variant.storage]
                                                 .filter(Boolean)
                                                 .join(' / ')}
                                         </span>
@@ -905,7 +954,7 @@ export default function VariantManager({
 
                     {/* Empty state when selections made but all removed */}
                     {variants.length === 0 &&
-                        (selectedSizeIds.size > 0 || selectedColorIds.size > 0 || selectedMaterialIds.size > 0 || selectedModelIds.size > 0) && (
+                        (selectedSizeIds.size > 0 || selectedColorIds.size > 0 || selectedMaterialIds.size > 0 || selectedRamIds.size > 0 || selectedStorageIds.size > 0) && (
                             <div className="text-center py-6 text-gray-400 text-xs">
                                 All generated variants have been removed. Adjust your selections above.
                             </div>
@@ -916,10 +965,11 @@ export default function VariantManager({
                         selectedSizeIds.size === 0 &&
                         selectedColorIds.size === 0 &&
                         selectedMaterialIds.size === 0 &&
-                        selectedModelIds.size === 0 && (
+                        selectedRamIds.size === 0 &&
+                        selectedStorageIds.size === 0 && (
                             <div className="text-center py-8 bg-white rounded-xl border border-dashed border-gray-300">
                                 <p className="text-xs font-bold text-gray-500">
-                                    Select sizes, colors, materials, or models above to generate variant combinations.
+                                    Select sizes, colors, materials, ram, or storage above to generate variant combinations.
                                 </p>
                             </div>
                         )}

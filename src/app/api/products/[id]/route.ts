@@ -43,7 +43,7 @@ export async function GET(request, { params }) {
             const allOptions: IVariantOptionDocument[] = await VariantOption.find({ isActive: true }).lean();
 
             // Create maps for quick order lookup (default to 999 if not found)
-            const getOrder = (type: 'size' | 'color' | 'material' | 'model', label: string) => {
+            const getOrder = (type: 'size' | 'color' | 'material' | 'ram' | 'storage', label: string) => {
                 if (!label) return 999;
                 const option = allOptions.find(o => o.type === type && o.label === label);
                 return option ? option.order : 999;
@@ -66,9 +66,13 @@ export async function GET(request, { params }) {
                 const materialOrderB = getOrder('material', b.material);
                 if (materialOrderA !== materialOrderB) return materialOrderA - materialOrderB;
 
-                const modelOrderA = getOrder('model', a.model);
-                const modelOrderB = getOrder('model', b.model);
-                return modelOrderA - modelOrderB;
+                const ramOrderA = getOrder('ram', a.ram);
+                const ramOrderB = getOrder('ram', b.ram);
+                if (ramOrderA !== ramOrderB) return ramOrderA - ramOrderB;
+
+                const storageOrderA = getOrder('storage', a.storage);
+                const storageOrderB = getOrder('storage', b.storage);
+                return storageOrderA - storageOrderB;
             });
 
             return NextResponse.json({

@@ -180,7 +180,7 @@ export default function ProductViewModal({ product, isOpen, onClose }: ProductVi
                                                 <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-200 uppercase tracking-tighter">No Img</div>
                                             )}
                                             <div className="min-w-0">
-                                                <p className="text-xs font-bold text-gray-900 truncate">{[v.size, v.colorName, v.material, v.model].filter(Boolean).join(' / ') || `Variant ${idx + 1}`}</p>
+                                                <p className="text-xs font-bold text-gray-900 truncate">{[v.size, v.colorName, v.material, v.ram, v.storage].filter(Boolean).join(' / ') || `Variant ${idx + 1}`}</p>
                                                 <p className="text-[10px] font-semibold text-indigo-600 font-mono tracking-tight truncate">{v.sku || 'NO-SKU'}</p>
                                             </div>
                                         </div>

@@ -24,6 +24,46 @@ interface Props {
     globalOptions?: any;
 }
 
+const CompatibleModelsSelector = ({
+    models,
+    selectedModel,
+    onSelect
+}: {
+    models: string[];
+    selectedModel: string;
+    onSelect: (model: string) => void;
+}) => {
+    if (!models || models.length === 0) return null;
+    return (
+        <div className="space-y-2 lg:space-y-4 pt-1 lg:pt-2">
+            <div>
+                <div className="flex items-center gap-2 mb-2 lg:mb-3">
+                    <span className="text-[10px] lg:text-xs font-black text-gray-700 uppercase tracking-wide">Select Your Model List</span>
+                    {selectedModel && (
+                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{selectedModel}</span>
+                    )}
+                </div>
+                <div className="flex flex-wrap gap-2 lg:gap-3">
+                    {models.map((opt) => {
+                        const isSelected = selectedModel === opt;
+                        return (
+                            <button
+                                key={opt}
+                                onClick={() => onSelect(isSelected ? '' : opt)}
+                                title={opt}
+                                className={`relative transition-all px-3 py-1.5 lg:px-4 lg:py-2 rounded border text-xs lg:text-sm font-bold ${isSelected ? 'border-orange-500 bg-orange-500 text-white shadow-sm' : 'border-gray-200 text-gray-700 hover:border-orange-400 hover:bg-orange-50'}`}
+                            >
+                                {opt}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 export default function ProductDetailClient({ product: initialProduct, globalOptions: serverOptions }: Props) {
     // Scroll to top on mount
     useEffect(() => { window.scrollTo(0, 0); }, []);
@@ -290,36 +330,7 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
         </div>
     ) : null;
 
-    const compatibleModelSlot = product.compatibleModels?.length > 0 ? (
-        <div className="space-y-2 lg:space-y-4 pt-1 lg:pt-2">
-            <div>
-                <div className="flex items-center gap-2 mb-1 lg:mb-2">
-                    <span className="text-[10px] lg:text-xs font-black text-gray-700 uppercase tracking-wide">Select Your Model List</span>
-                    {selectedModel && (
-                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{selectedModel}</span>
-                    )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    {product.compatibleModels.map((opt: string) => {
-                        const isSelected = selectedModel === opt;
-                        return (
-                            <button
-                                key={opt}
-                                onClick={() => {
-                                    setSelectionError(null);
-                                    setSelectedModel(isSelected ? '' : opt);
-                                }}
-                                title={opt}
-                                className={`relative transition-all px-2 lg:px-3 py-1 lg:py-1.5 rounded border text-[11px] lg:text-xs font-bold ${isSelected ? 'border-orange-500 bg-orange-500 text-white' : 'border-gray-200 text-gray-700 hover:border-orange-400'}`}
-                            >
-                                {opt}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-        </div>
-    ) : null;
+    const hasManyModels = product.compatibleModels && (product.compatibleModels.length > 3 || product.compatibleModels.join('').length > 25);
 
     const categoryId = product.category?._id || product.category;
     const subCategoryId = product.subCategory?._id || product.subCategory;
@@ -388,7 +399,16 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
                             variantSlot={
                                 <>
                                     {variantSlot}
-                                    {compatibleModelSlot}
+                                    <div className={hasManyModels ? "block lg:hidden" : "block"}>
+                                        <CompatibleModelsSelector 
+                                            models={product.compatibleModels}
+                                            selectedModel={selectedModel}
+                                            onSelect={(opt) => {
+                                                setSelectionError(null);
+                                                setSelectedModel(opt);
+                                            }}
+                                        />
+                                    </div>
                                 </>
                             }
                         />
@@ -397,13 +417,29 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
                     {/* Col 3: More Products Sidebar — bottom-up (most specific first) */}
                     <div className="lg:col-span-3 hidden lg:block lg:pl-6 xl:pl-10">
                         <div className="border border-gray-100 rounded-xl p-4 sticky top-6 lg:-mt-4 bg-white">
-                            <ProductMoreSidebar
-                                currentProductId={product._id}
-                                categoryId={categoryId}
-                                subCategoryId={subCategoryId}
-                                childCategoryId={childCategoryId}
-                                subChildCategoryId={subChildCategoryId}
-                            />
+                            {hasManyModels ? (
+                                <div className="mt-2">
+                                    <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2 uppercase tracking-wide text-sm">
+                                        Choose Your Model
+                                    </h3>
+                                    <CompatibleModelsSelector 
+                                        models={product.compatibleModels}
+                                        selectedModel={selectedModel}
+                                        onSelect={(opt) => {
+                                            setSelectionError(null);
+                                            setSelectedModel(opt);
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <ProductMoreSidebar
+                                    currentProductId={product._id}
+                                    categoryId={categoryId}
+                                    subCategoryId={subCategoryId}
+                                    childCategoryId={childCategoryId}
+                                    subChildCategoryId={subChildCategoryId}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

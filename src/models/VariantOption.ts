@@ -1,7 +1,7 @@
 import mongoose, { Schema, Model, Document } from 'mongoose';
 
 export interface IVariantOptionDocument extends Document {
-    type: 'size' | 'color' | 'material' | 'model';
+    type: 'size' | 'color' | 'material' | 'ram' | 'storage';
     label: string;
     order: number;
     colorCode?: string;
@@ -14,7 +14,7 @@ const VariantOptionSchema = new Schema<IVariantOptionDocument>(
     {
         type: {
             type: String,
-            enum: ['size', 'color', 'material', 'model'],
+            enum: ['size', 'color', 'material', 'ram', 'storage'],
             required: [true, 'Variant option type is required'],
         },
         label: {

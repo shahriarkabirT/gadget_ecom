@@ -12,7 +12,8 @@ export interface IVariant {
     colorName?: string;
     colorCode?: string;
     material?: string;
-    model?: string;
+    ram?: string;
+    storage?: string;
     mrp: number;
     price: number;
     /** Optional cost per unit for profit analytics */

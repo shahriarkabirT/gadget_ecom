@@ -10,7 +10,8 @@ interface Variant {
     colorName?: string;
     colorCode?: string;
     material?: string;
-    model?: string;
+    ram?: string;
+    storage?: string;
     price?: number;
     mrp?: number;
     stock?: number;
@@ -56,8 +57,9 @@ export default function ComboProductCard({
               const sizeMatch = !v.size || selectedVariants['Size'] === v.size;
               const colorMatch = !v.colorName || selectedVariants['Color'] === v.colorName;
               const materialMatch = !v.material || selectedVariants['Material'] === v.material;
-              const modelMatch = !v.model || selectedVariants['Model'] === v.model;
-              return sizeMatch && colorMatch && materialMatch && modelMatch;
+              const ramMatch = !v.ram || selectedVariants['RAM'] === v.ram;
+              const storageMatch = !v.storage || selectedVariants['Storage'] === v.storage;
+              return sizeMatch && colorMatch && materialMatch && ramMatch && storageMatch;
           })
         : undefined;
 
@@ -79,15 +81,20 @@ export default function ComboProductCard({
         hasVariants
             ? [...new Set(product.variants?.map((v) => v.material).filter(Boolean) as string[])]
             : [];
-    const getModels = () =>
+    const getRams = () =>
         hasVariants
-            ? [...new Set(product.variants?.map((v) => v.model).filter(Boolean) as string[])]
+            ? [...new Set(product.variants?.map((v) => v.ram).filter(Boolean) as string[])]
+            : [];
+    const getStorages = () =>
+        hasVariants
+            ? [...new Set(product.variants?.map((v) => v.storage).filter(Boolean) as string[])]
             : [];
 
     const sizes = getSizes();
     const colors = getColors();
     const materials = getMaterials();
-    const models = getModels();
+    const rams = getRams();
+    const storages = getStorages();
 
     const getColorCode = (colorName: string) =>
         product.variants?.find((v) => v.colorName === colorName)?.colorCode;
@@ -229,22 +236,44 @@ export default function ComboProductCard({
                         </div>
                     )}
 
-                    {models.length > 0 && (
+                    {rams.length > 0 && (
                         <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">Model:</span>
+                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">RAM:</span>
                             <div className="flex flex-wrap gap-2">
-                                {models.map((model) => (
+                                {rams.map((ram) => (
                                     <button
-                                        key={model}
+                                        key={ram}
                                         type="button"
-                                        onClick={() => onVariantChange('Model', model)}
+                                        onClick={() => onVariantChange('RAM', ram)}
                                         className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
-                                            selectedVariants['Model'] === model
+                                            selectedVariants['RAM'] === ram
                                                 ? 'bg-gray-900 border-gray-900 text-white shadow-md'
                                                 : 'border-gray-200 text-gray-600 hover:border-gray-400'
                                         }`}
                                     >
-                                        {model}
+                                        {ram}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {storages.length > 0 && (
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">Storage:</span>
+                            <div className="flex flex-wrap gap-2">
+                                {storages.map((storage) => (
+                                    <button
+                                        key={storage}
+                                        type="button"
+                                        onClick={() => onVariantChange('Storage', storage)}
+                                        className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
+                                            selectedVariants['Storage'] === storage
+                                                ? 'bg-gray-900 border-gray-900 text-white shadow-md'
+                                                : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        {storage}
                                     </button>
                                 ))}
                             </div>

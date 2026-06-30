@@ -56,9 +56,9 @@ function getProductPrice(p: any): number {
         !v.colorName || p.selectedVariants?.["Color"] === v.colorName;
       const materialMatch =
         !v.material || p.selectedVariants?.["Material"] === v.material;
-      const modelMatch =
-        !v.model || p.selectedVariants?.["Model"] === v.model;
-      return sizeMatch && colorMatch && materialMatch && modelMatch;
+      const ramMatch = !v.ram || p.selectedVariants?.["RAM"] === v.ram;
+      const storageMatch = !v.storage || p.selectedVariants?.["Storage"] === v.storage;
+      return sizeMatch && colorMatch && materialMatch && ramMatch && storageMatch;
     });
     if (activeVariant?.price && activeVariant.price > 0) return activeVariant.price;
   }

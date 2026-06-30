@@ -70,8 +70,9 @@ export function CartProvider({ children }: CartProviderProps) {
             const sizeMatch = !v.size || variant['Size'] === v.size;
             const colorMatch = !v.colorName || variant['Color'] === v.colorName;
             const materialMatch = !v.material || variant['Material'] === v.material;
-            const modelMatch = !v.model || variant['Model'] === v.model;
-            return sizeMatch && colorMatch && materialMatch && modelMatch;
+            const ramMatch = !v.ram || variant['RAM'] === v.ram;
+            const storageMatch = !v.storage || variant['Storage'] === v.storage;
+            return sizeMatch && colorMatch && materialMatch && ramMatch && storageMatch;
         });
 
         const cartItem: CartItem = {
