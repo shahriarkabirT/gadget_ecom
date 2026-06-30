@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import CompatibleModel from '@/models/CompatibleModel';
+import ModelCategory from '@/models/ModelCategory';
 import { slugify } from '@/lib/utils';
 import { requirePermission } from '@/lib/auth';
 
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
         
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
-        const limit = parseInt(searchParams.get('limit') || '20');
+        const limit = parseInt(searchParams.get('limit') || '50');
         const search = searchParams.get('search') || '';
         const isActive = searchParams.get('isActive');
 
@@ -26,19 +26,18 @@ export async function GET(request: Request) {
 
         const skip = (page - 1) * limit;
 
-        const [models, total] = await Promise.all([
-            CompatibleModel.find(query)
-                .sort({ order: 1, name: 1 })
+        const [categories, total] = await Promise.all([
+            ModelCategory.find(query)
+                .sort({ name: 1 })
                 .skip(skip)
                 .limit(limit)
-                .populate('category', 'name slug')
                 .lean(),
-            CompatibleModel.countDocuments(query)
+            ModelCategory.countDocuments(query)
         ]);
 
         return NextResponse.json({ 
             success: true, 
-            models,
+            categories,
             total,
             page,
             limit,
@@ -46,7 +45,7 @@ export async function GET(request: Request) {
         });
     } catch (error: any) {
         return NextResponse.json(
-            { success: false, message: error.message || 'Failed to fetch compatible models' },
+            { success: false, message: error.message || 'Failed to fetch categories' },
             { status: 500 }
         );
     }
@@ -61,37 +60,35 @@ export async function POST(request: Request) {
 
         await dbConnect();
         const body = await request.json();
-        const { name, order, category } = body;
+        const { name } = body;
 
         if (!name) {
             return NextResponse.json(
-                { success: false, message: 'Model name is required' },
+                { success: false, message: 'Category name is required' },
                 { status: 400 }
             );
         }
 
         const slug = slugify(name);
 
-        const existing = await CompatibleModel.findOne({ slug });
+        const existing = await ModelCategory.findOne({ slug });
         if (existing) {
             return NextResponse.json(
-                { success: false, message: 'A model with this name already exists' },
+                { success: false, message: 'A category with this name already exists' },
                 { status: 409 }
             );
         }
 
-        const model = await CompatibleModel.create({
+        const category = await ModelCategory.create({
             name,
             slug,
-            category: category || null,
-            order: order || 0,
             isActive: true,
         });
 
-        return NextResponse.json({ success: true, model }, { status: 201 });
+        return NextResponse.json({ success: true, category }, { status: 201 });
     } catch (error: any) {
         return NextResponse.json(
-            { success: false, message: error.message || 'Failed to create compatible model' },
+            { success: false, message: error.message || 'Failed to create category' },
             { status: 500 }
         );
     }

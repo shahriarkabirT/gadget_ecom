@@ -41,7 +41,7 @@ export const compatibleModelApi = apiSlice.injectEndpoints({
         }),
         createCompatibleModel: builder.mutation<
             { success: boolean; model: ICompatibleModel },
-            { name: string; order?: number }
+            { name: string; category?: string; order?: number }
         >({
             query: (body) => ({
                 url: '/compatible-models',
@@ -52,7 +52,7 @@ export const compatibleModelApi = apiSlice.injectEndpoints({
         }),
         updateCompatibleModel: builder.mutation<
             { success: boolean; model: ICompatibleModel },
-            { id: string; body: { name?: string; isActive?: boolean; order?: number } }
+            { id: string; body: { name?: string; category?: string; isActive?: boolean; order?: number } }
         >({
             query: ({ id, body }) => ({
                 url: `/compatible-models/${id}`,

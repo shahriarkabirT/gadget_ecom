@@ -152,10 +152,22 @@ export interface IBrand {
 
 export interface IBrandDocument extends Omit<IBrand, '_id'>, Document { }
 
+export interface IModelCategory {
+    _id: string;
+    name: string;
+    slug: string;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface IModelCategoryDocument extends Omit<IModelCategory, '_id'>, Document { }
+
 export interface ICompatibleModel {
     _id: string;
     name: string;
     slug: string;
+    category?: Types.ObjectId | IModelCategory;
     order: number;
     isActive: boolean;
     createdAt: Date;

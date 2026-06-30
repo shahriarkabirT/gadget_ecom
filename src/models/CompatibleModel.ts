@@ -16,6 +16,11 @@ const CompatibleModelSchema = new Schema<ICompatibleModelDocument>(
             lowercase: true,
             trim: true,
         },
+        category: {
+            type: Schema.Types.ObjectId,
+            ref: 'ModelCategory',
+            default: null,
+        },
         order: {
             type: Number,
             default: 0,

@@ -9,6 +9,8 @@ import {
 } from '@/redux/features/compatibleModel/compatibleModelApi';
 import type { ICompatibleModel } from '@/types';
 import { showError, showSuccess } from '@/lib/toast';
+import ModelCategoryModal from '@/components/admin/ModelCategoryModal';
+import { useGetModelCategoriesQuery } from '@/redux/features/modelCategory/modelCategoryApi';
 
 export default function CompatibleModelsPage() {
     const [page, setPage] = useState(1);
@@ -21,8 +23,13 @@ export default function CompatibleModelsPage() {
     const [deleteModel] = useDeleteCompatibleModelMutation();
 
     const [newModelName, setNewModelName] = useState('');
+    const [newModelCategoryId, setNewModelCategoryId] = useState('');
     const [newModelOrder, setNewModelOrder] = useState('0');
-    const [editing, setEditing] = useState<{ id: string; name: string; order: number } | null>(null);
+    const [editing, setEditing] = useState<{ id: string; name: string; category?: string; order: number } | null>(null);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
+    const { data: categoryData } = useGetModelCategoriesQuery({ limit: 100 });
+    const categories = categoryData?.categories || [];
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -41,11 +48,13 @@ export default function CompatibleModelsPage() {
         try {
             const res = await createModel({ 
                 name: newModelName.trim(),
+                category: newModelCategoryId || undefined,
                 order: parseInt(newModelOrder) || 0 
             }).unwrap();
             if (res.success) {
                 showSuccess('Created', 'Model added successfully');
                 setNewModelName('');
+                setNewModelCategoryId('');
                 setNewModelOrder('0');
             }
         } catch (error: any) {
@@ -53,10 +62,14 @@ export default function CompatibleModelsPage() {
         }
     };
 
-    const handleUpdate = async (id: string, currentName: string, currentOrder: number) => {
+    const handleUpdate = async (id: string, currentName: string, currentCategory: any, currentOrder: number) => {
         if (!editing) return;
         
-        if (editing.name.trim() === currentName && editing.order === currentOrder) {
+        const currentCategoryId = typeof currentCategory === 'object' ? currentCategory?._id : currentCategory;
+        const normalizedCurrent = currentCategoryId || 'General';
+        const normalizedEditing = editing.category || 'General';
+
+        if (editing.name.trim() === currentName && normalizedEditing === normalizedCurrent && editing.order === currentOrder) {
             setEditing(null);
             return;
         }
@@ -66,6 +79,7 @@ export default function CompatibleModelsPage() {
                 id,
                 body: { 
                     name: editing.name.trim(),
+                    category: editing.category?.trim(),
                     order: editing.order
                 },
             }).unwrap();
@@ -136,6 +150,22 @@ export default function CompatibleModelsPage() {
                             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                         />
                     </div>
+                    <div className="flex-1">
+                        <label className="block text-[11px] font-semibold uppercase tracking-widest text-gray-900 mb-2 flex justify-between items-center">
+                            <span>Category</span>
+                            <button onClick={() => setIsCategoryModalOpen(true)} className="text-indigo-600 hover:text-indigo-800 text-[9px] hover:underline">Manage Categories</button>
+                        </label>
+                        <select
+                            value={newModelCategoryId}
+                            onChange={(e) => setNewModelCategoryId(e.target.value)}
+                            className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-900 outline-none transition-all"
+                        >
+                            <option value="">-- No Category --</option>
+                            {categories.map(cat => (
+                                <option key={cat._id} value={cat._id}>{cat.name}</option>
+                            ))}
+                        </select>
+                    </div>
                     <div className="w-24">
                         <label className="block text-[11px] font-semibold uppercase tracking-widest text-gray-900 mb-2">
                             Order
@@ -179,6 +209,7 @@ export default function CompatibleModelsPage() {
                             <tr className="border-b border-gray-200 bg-gray-50/50">
                                 <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-20">Order</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Model Name</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Category</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-24">Status</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest text-right w-32">Actions</th>
                             </tr>
@@ -186,13 +217,13 @@ export default function CompatibleModelsPage() {
                         <tbody className="divide-y divide-gray-100 relative">
                             {isLoading || isFetching ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center">
+                                    <td colSpan={5} className="px-6 py-8 text-center">
                                         <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
                                     </td>
                                 </tr>
                             ) : models.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500 text-sm">
+                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-sm">
                                         No models found. Add one above.
                                     </td>
                                 </tr>
@@ -206,7 +237,7 @@ export default function CompatibleModelsPage() {
                                                     value={editing.order}
                                                     onChange={(e) => setEditing({ ...editing, order: parseInt(e.target.value) || 0 })}
                                                     onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') handleUpdate(model._id, model.name, model.order);
+                                                        if (e.key === 'Enter') handleUpdate(model._id, model.name, model.category, model.order);
                                                         if (e.key === 'Escape') setEditing(null);
                                                     }}
                                                     className="w-16 bg-white border border-blue-500 rounded px-2 py-1.5 text-sm font-medium text-gray-900 outline-none"
@@ -223,13 +254,31 @@ export default function CompatibleModelsPage() {
                                                     value={editing.name}
                                                     onChange={(e) => setEditing({ ...editing, name: e.target.value })}
                                                     onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') handleUpdate(model._id, model.name, model.order);
+                                                        if (e.key === 'Enter') handleUpdate(model._id, model.name, model.category, model.order);
                                                         if (e.key === 'Escape') setEditing(null);
                                                     }}
                                                     className="w-full bg-white border border-blue-500 rounded px-3 py-1.5 text-sm font-medium text-gray-900 outline-none"
                                                 />
                                             ) : (
                                                 <span className="text-sm font-semibold text-gray-900">{model.name}</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {editing?.id === model._id ? (
+                                                <select
+                                                    value={editing.category || ''}
+                                                    onChange={(e) => setEditing({ ...editing, category: e.target.value })}
+                                                    className="w-full bg-white border border-blue-500 rounded px-3 py-1.5 text-sm font-medium text-gray-900 outline-none"
+                                                >
+                                                    <option value="">-- None --</option>
+                                                    {categories.map(cat => (
+                                                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                    {(model.category as any)?.name || 'General'}
+                                                </span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
@@ -246,7 +295,7 @@ export default function CompatibleModelsPage() {
                                             {editing?.id === model._id ? (
                                                 <>
                                                     <button
-                                                        onClick={() => handleUpdate(model._id, model.name, model.order)}
+                                                        onClick={() => handleUpdate(model._id, model.name, model.category, model.order)}
                                                         disabled={isUpdating}
                                                         className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                                                     >
@@ -266,7 +315,7 @@ export default function CompatibleModelsPage() {
                                             ) : (
                                                 <>
                                                     <button
-                                                        onClick={() => setEditing({ id: model._id, name: model.name, order: model.order })}
+                                                        onClick={() => setEditing({ id: model._id, name: model.name, category: (model.category as any)?._id || '', order: model.order })}
                                                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
@@ -278,7 +327,7 @@ export default function CompatibleModelsPage() {
                                                         className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                                         </svg>
                                                     </button>
                                                 </>
@@ -313,6 +362,8 @@ export default function CompatibleModelsPage() {
                     </div>
                 )}
             </div>
+
+            <ModelCategoryModal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} />
         </div>
     );
 }

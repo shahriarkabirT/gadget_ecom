@@ -65,11 +65,21 @@ export default function CompatibleModelSelector({ selectedModels, onChange }: Co
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Filter out already selected models from suggestions
-    const activeModelNames = accumulatedModels.map(m => m.name);
-    const filteredSuggestions = activeModelNames.filter(
-        (name) => !selectedModels.includes(name)
+    // Group available models by category
+    const availableModels = accumulatedModels.filter(
+        (m) => !selectedModels.includes(m.name)
     );
+    
+    // Sort models by order then name, and group by category
+    const groupedModels = availableModels.reduce((acc, model) => {
+        const catName = (model.category as any)?.name || 'General';
+        if (!acc[catName]) acc[catName] = [];
+        acc[catName].push(model.name);
+        return acc;
+    }, {} as Record<string, string[]>);
+
+    const activeModelNames = accumulatedModels.map(m => m.name);
+    const hasFilteredSuggestions = availableModels.length > 0;
 
     const handleSelect = (modelName: string) => {
         if (!selectedModels.includes(modelName)) {
@@ -122,8 +132,12 @@ export default function CompatibleModelSelector({ selectedModels, onChange }: Co
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             e.preventDefault();
-                            if (filteredSuggestions.length > 0) {
-                                handleSelect(filteredSuggestions[0]);
+                            if (hasFilteredSuggestions) {
+                                // Select the first item from the first category if we just hit enter
+                                const firstCat = Object.keys(groupedModels)[0];
+                                if (firstCat && groupedModels[firstCat].length > 0) {
+                                    handleSelect(groupedModels[firstCat][0]);
+                                }
                             } else if (inputValue.trim()) {
                                 handleCreateNew();
                             }
@@ -132,18 +146,25 @@ export default function CompatibleModelSelector({ selectedModels, onChange }: Co
                 />
 
                 {/* Dropdown Suggestions */}
-                {isOpen && (inputValue.trim() || filteredSuggestions.length > 0) && (
+                {isOpen && (inputValue.trim() || hasFilteredSuggestions) && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 flex flex-col">
                         <ul className="py-1 overflow-y-auto flex-1">
-                            {filteredSuggestions.map((modelName) => (
-                                <li
-                                    key={modelName}
-                                    onClick={() => handleSelect(modelName)}
-                                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 font-medium flex items-center justify-between group"
-                                >
-                                    {modelName}
-                                    <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 uppercase tracking-widest font-bold">Select</span>
-                                </li>
+                            {Object.entries(groupedModels).map(([category, models]) => (
+                                <div key={category}>
+                                    <div className="px-4 py-1.5 bg-gray-50/80 text-[10px] font-black text-gray-500 uppercase tracking-widest sticky top-0 border-y border-gray-100">
+                                        {category}
+                                    </div>
+                                    {models.map((modelName) => (
+                                        <li
+                                            key={modelName}
+                                            onClick={() => handleSelect(modelName)}
+                                            className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 font-medium flex items-center justify-between group"
+                                        >
+                                            {modelName}
+                                            <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 uppercase tracking-widest font-bold">Select</span>
+                                        </li>
+                                    ))}
+                                </div>
                             ))}
                             
                             {inputValue.trim() && !activeModelNames.some(name => name.toLowerCase() === inputValue.toLowerCase()) && (
@@ -189,25 +210,32 @@ export default function CompatibleModelSelector({ selectedModels, onChange }: Co
             </div>
 
             {/* Available Models to Add */}
-            {filteredSuggestions.length > 0 && !inputValue && (
+            {hasFilteredSuggestions && !inputValue && (
                 <div className="mt-3">
-                    <div className="flex flex-wrap gap-2">
-                        {filteredSuggestions.map((model) => (
-                            <button
-                                key={`add-${model}`}
-                                type="button"
-                                onClick={() => handleSelect(model)}
-                                className="flex items-center gap-1 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 px-2 py-1 rounded-md text-[10px] font-semibold transition-colors uppercase tracking-tight"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                {model}
-                            </button>
+                    <div className="space-y-4">
+                        {Object.entries(groupedModels).map(([category, models]) => (
+                            <div key={category}>
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{category}</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {models.map((model) => (
+                                        <button
+                                            key={`add-${model}`}
+                                            type="button"
+                                            onClick={() => handleSelect(model)}
+                                            className="flex items-center gap-1 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 px-2 py-1 rounded-md text-[10px] font-semibold transition-colors uppercase tracking-tight"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                            </svg>
+                                            {model}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         ))}
                     </div>
                     {hasMore && (
-                        <div className="mt-3">
+                        <div className="mt-4 pt-2 border-t border-gray-100">
                             <button
                                 type="button"
                                 onClick={() => setPage(p => p + 1)}

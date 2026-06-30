@@ -8,7 +8,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     try {
         await dbConnect();
         const { id } = await params;
-        const model = await CompatibleModel.findById(id).lean();
+        const model = await CompatibleModel.findById(id).populate('category', 'name slug').lean();
 
         if (!model) {
             return NextResponse.json({ success: false, message: 'Model not found' }, { status: 404 });
@@ -33,7 +33,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         await dbConnect();
         const { id } = await params;
         const body = await request.json();
-        const { name, isActive, order } = body;
+        const { name, isActive, order, category } = body;
 
         const updateData: any = {};
         
@@ -46,6 +46,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         }
         if (order !== undefined) {
             updateData.order = order;
+        }
+        if (category !== undefined) {
+            updateData.category = category;
         }
 
         const model = await CompatibleModel.findByIdAndUpdate(
