@@ -15,6 +15,7 @@ export interface GetModelsArgs {
     limit?: number;
     search?: string;
     isActive?: boolean;
+    category?: string;
 }
 
 export const compatibleModelApi = apiSlice.injectEndpoints({
@@ -28,6 +29,7 @@ export const compatibleModelApi = apiSlice.injectEndpoints({
                     if (args.limit) params.append('limit', args.limit.toString());
                     if (args.search) params.append('search', args.search);
                     if (args.isActive !== undefined) params.append('isActive', args.isActive.toString());
+                    if (args.category) params.append('category', args.category);
                     if (params.toString()) url += `?${params.toString()}`;
                 }
                 return url;

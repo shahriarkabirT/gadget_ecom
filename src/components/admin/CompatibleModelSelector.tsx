@@ -5,6 +5,7 @@ import {
     useGetCompatibleModelsQuery,
     useCreateCompatibleModelMutation
 } from '@/redux/features/compatibleModel/compatibleModelApi';
+import { useGetModelCategoriesQuery } from '@/redux/features/modelCategory/modelCategoryApi';
 import type { ICompatibleModel } from '@/types';
 import { showError, showSuccess } from '@/lib/toast';
 
@@ -18,15 +19,22 @@ export default function CompatibleModelSelector({ selectedModels, onChange }: Co
     const [inputValue, setInputValue] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState('');
     const [accumulatedModels, setAccumulatedModels] = useState<ICompatibleModel[]>([]);
+    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+    const [categorySearch, setCategorySearch] = useState('');
     
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const categoryWrapperRef = useRef<HTMLDivElement>(null);
+
+    const { data: categoriesData } = useGetModelCategoriesQuery({ limit: 100 });
 
     const { data, isLoading, isFetching } = useGetCompatibleModelsQuery({
         page,
         limit: 15,
         search: debouncedSearch,
-        isActive: true
+        isActive: true,
+        category: selectedCategory || undefined
     });
 
     const [createModel, { isLoading: isCreating }] = useCreateCompatibleModelMutation();
@@ -59,6 +67,9 @@ export default function CompatibleModelSelector({ selectedModels, onChange }: Co
         function handleClickOutside(event: MouseEvent) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+            }
+            if (categoryWrapperRef.current && !categoryWrapperRef.current.contains(event.target as Node)) {
+                setIsCategoryOpen(false);
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
@@ -116,10 +127,76 @@ export default function CompatibleModelSelector({ selectedModels, onChange }: Co
 
     const hasMore = data && data.page < data.totalPages;
 
+    const filteredCategories = categoriesData?.categories?.filter(cat => 
+        cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+    ) || [];
+
     return (
-        <div className="space-y-3" ref={wrapperRef}>
-            <div className="relative">
-                <input
+        <div className="space-y-3">
+            <div className="flex flex-col gap-2 relative">
+                <div className="relative" ref={categoryWrapperRef}>
+                    <div 
+                        className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm font-medium text-gray-900 cursor-pointer flex justify-between items-center hover:border-gray-400 transition-all"
+                        onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                    >
+                        <span className="truncate">
+                            {selectedCategory ? categoriesData?.categories?.find(c => c._id === selectedCategory)?.name : 'All Categories'}
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-gray-500 transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+
+                    {isCategoryOpen && (
+                        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 flex flex-col">
+                            <div className="p-2 border-b border-gray-100">
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 transition-all"
+                                    placeholder="Search categories..."
+                                    value={categorySearch}
+                                    onChange={(e) => setCategorySearch(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    autoFocus
+                                />
+                            </div>
+                            <ul className="py-1 overflow-y-auto flex-1">
+                                <li
+                                    className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm font-medium ${!selectedCategory ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-700'}`}
+                                    onClick={() => {
+                                        setSelectedCategory('');
+                                        setPage(1);
+                                        setAccumulatedModels([]);
+                                        setIsCategoryOpen(false);
+                                        setCategorySearch('');
+                                    }}
+                                >
+                                    All Categories
+                                </li>
+                                {filteredCategories.map(cat => (
+                                    <li
+                                        key={cat._id}
+                                        className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm font-medium ${selectedCategory === cat._id ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-700'}`}
+                                    onClick={() => {
+                                            setSelectedCategory(cat._id);
+                                            setPage(1);
+                                            setAccumulatedModels([]);
+                                            setIsCategoryOpen(false);
+                                            setCategorySearch('');
+                                        }}
+                                    >
+                                        {cat.name}
+                                    </li>
+                                ))}
+                                {filteredCategories.length === 0 && (
+                                    <li className="px-4 py-3 text-sm text-gray-500 text-center">No categories found</li>
+                                )}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+                <div className="relative flex-1" ref={wrapperRef}>
+                    <input
                     type="text"
                     value={inputValue}
                     onChange={(e) => {
@@ -208,6 +285,7 @@ export default function CompatibleModelSelector({ selectedModels, onChange }: Co
                     </div>
                 )}
             </div>
+        </div>
 
             {/* Available Models to Add */}
             {hasFilteredSuggestions && !inputValue && (
