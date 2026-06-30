@@ -1,81 +1,70 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { notFound, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useGetProductBySlugQuery } from '@/redux/features/product/productApi';
+import { useGetAttributesQuery } from '@/redux/features/attribute/attributeApi';
+import { useGetPublicSettingsQuery } from '@/redux/features/settings/settingsApi';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import RelatedProducts from '@/components/client/RelatedProducts';
-import { notFound, useRouter } from 'next/navigation';
-import { formatCurrency, calculateDiscountedPrice, isSameVariant } from '@/lib/utils';
-import { useGetProductBySlugQuery } from '@/redux/features/product/productApi';
-import { useGetVariantOptionsQuery } from '@/redux/features/variantOption/variantOptionApi';
-import { useGetPublicSettingsQuery } from '@/redux/features/settings/settingsApi';
-import { ProductDetailSkeleton } from '@/components/shared/Skeletons';
-import {
-    ProductImageGallery,
-    ProductInfo,
+import { trackViewContent, trackAddToCart } from '@/lib/gtm-datalayer';
+import { calculateDiscountedPrice } from '@/lib/utils';
+import { 
+    ProductImageGallery, 
+    ProductInfo, 
+    ProductTabsSection, 
     ProductMoreSidebar,
-    ProductTabsSection,
+    CompatibleModelsSelector 
 } from '@/components/client/product-detail';
-import { trackViewContent, trackAddToCart, trackInitiateCheckout } from '@/lib/gtm-datalayer';
+import RelatedProducts from '@/components/client/RelatedProducts';
+import { ProductDetailSkeleton } from '@/components/shared/Skeletons';
 
-interface Props {
-    product: any;
-    globalOptions?: any;
+interface ProductDetailClientProps {
+    initialProduct: any; // Using any for now to avoid strict typing issues with populated fields
+    serverOptions?: any;
 }
 
-const CompatibleModelsSelector = ({
-    models,
-    selectedModel,
-    onSelect
-}: {
-    models: string[];
-    selectedModel: string;
-    onSelect: (model: string) => void;
-}) => {
-    if (!models || models.length === 0) return null;
+// Utility to compare standard variant fields or attributes map
+function isSameVariant(v1: any, v2: any) {
+    if (!v1 && !v2) return true;
+    if (!v1 || !v2) return false;
+    
+    // Check attributes map if it exists
+    if (v1.attributes || v2.attributes) {
+        const a1 = v1.attributes || {};
+        const a2 = v2.attributes || {};
+        const keys1 = Object.keys(a1);
+        const keys2 = Object.keys(a2);
+        if (keys1.length !== keys2.length) return false;
+        return keys1.every(k => a1[k] === a2[k]);
+    }
+    
+    // Fallback to legacy fields
     return (
-        <div className="space-y-2 lg:space-y-4 pt-1 lg:pt-2">
-            <div>
-                <div className="flex items-center gap-2 mb-2 lg:mb-3">
-                    <span className="text-[10px] lg:text-xs font-black text-gray-700 uppercase tracking-wide">Select Your Model List</span>
-                    {selectedModel && (
-                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{selectedModel}</span>
-                    )}
-                </div>
-                <div className="flex flex-wrap gap-2 lg:gap-3">
-                    {models.map((opt) => {
-                        const isSelected = selectedModel === opt;
-                        return (
-                            <button
-                                key={opt}
-                                onClick={() => onSelect(isSelected ? '' : opt)}
-                                title={opt}
-                                className={`relative transition-all px-3 py-1.5 lg:px-4 lg:py-2 rounded border text-xs lg:text-sm font-bold ${isSelected ? 'border-orange-500 bg-orange-500 text-white shadow-sm' : 'border-gray-200 text-gray-700 hover:border-orange-400 hover:bg-orange-50'}`}
-                            >
-                                {opt}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-        </div>
+        v1.size === v2.size &&
+        v1.colorName === v2.colorName &&
+        v1.material === v2.material &&
+        v1.ram === v2.ram &&
+        v1.storage === v2.storage &&
+        v1.model === v2.model
     );
-};
+}
 
-
-export default function ProductDetailClient({ product: initialProduct, globalOptions: serverOptions }: Props) {
-    // Scroll to top on mount
-    useEffect(() => { window.scrollTo(0, 0); }, []);
+export default function ProductDetailClient({ initialProduct, serverOptions }: ProductDetailClientProps) {
+    const categoryId = initialProduct.category?._id || initialProduct.category;
+    const subCategoryId = initialProduct.subCategory?._id || initialProduct.subCategory;
+    const childCategoryId = initialProduct.childCategory?._id || initialProduct.childCategory;
+    const subChildCategoryId = initialProduct.subChildCategory?._id || initialProduct.subChildCategory;
 
 
     const { data: fetchedProduct, isLoading: isProductLoading } = useGetProductBySlugQuery(initialProduct.slug, {
         skip: !!initialProduct,
     });
-    const { data: clientOptions } = useGetVariantOptionsQuery(undefined, { skip: !!serverOptions });
+    const { data: attributesData } = useGetAttributesQuery();
     const { data: settingsData } = useGetPublicSettingsQuery();
 
-    const globalOptions = serverOptions || clientOptions;
+    const globalAttributes = attributesData?.attributes || [];
     const product = fetchedProduct || initialProduct;
 
     const router = useRouter();
@@ -83,23 +72,27 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
     const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
     const [quantity, setQuantity] = useState(1);
+    
+    // Track selected attribute values: { "size": "M", "color": "Red" }
     const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
     const [selectedModel, setSelectedModel] = useState<string>('');
     
     // --- Move Price Calculation Up for Hook Safety ---
     const activeVariant = product?.variants?.find((v: any) => {
-        const sizeMatch = !v.size || selectedVariants['Size'] === v.size;
-        const colorMatch = !v.colorName || selectedVariants['Color'] === v.colorName;
-        const materialMatch = !v.material || selectedVariants['Material'] === v.material;
-        const modelMatch = !v.model || selectedVariants['Model'] === v.model;
-        return sizeMatch && colorMatch && materialMatch && modelMatch;
+        // If variant uses the new dynamic attributes map
+        if (v.attributes && Object.keys(v.attributes).length > 0) {
+            return Object.entries(selectedVariants).every(([slug, val]) => v.attributes[slug] === val) &&
+                (!selectedModel || v.attributes['model'] === selectedModel || v.model === selectedModel);
+        }
+        return false;
     });
+    
     const currentMrp = activeVariant?.mrp || product?.mrp || product?.price || 0;
     const currentDiscountValue = (activeVariant && activeVariant.discountValue !== undefined) ? activeVariant.discountValue : (product?.discountValue || 0);
     const currentDiscountType = activeVariant?.discountType || product?.discountType || 'percentage';
     const discountedPrice = activeVariant?.price || calculateDiscountedPrice(currentMrp, currentDiscountValue, currentDiscountType);
 
-    // Meta Pixel: Track ViewContent (Moved before early returns)
+    // Meta Pixel: Track ViewContent
     useEffect(() => {
         if (product && product._id && discountedPrice) {
             trackViewContent({
@@ -134,48 +127,59 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
     if (!product) { notFound(); return null; }
 
     // --- Variant logic ---
+    // Figure out which attributes actually exist on this product's variants
     const requiredOptions = product.variants?.length > 0
         ? [...new Set<string>(product.variants.flatMap((v: any) => {
-            const types: string[] = [];
-            if (v.size) types.push('Size');
-            if (v.colorName) types.push('Color');
-            if (v.material) types.push('Material');
-            if (v.model) types.push('Model');
-            return types;
+            if (v.attributes && Object.keys(v.attributes).length > 0) {
+                return Object.keys(v.attributes);
+            }
+            return [];
         }))]
         : [];
 
-    const missingSelection = (requiredOptions as string[]).find(t => !(selectedVariants as any)[t]) || (product.compatibleModels?.length > 0 && !selectedModel ? 'Model' : undefined);
+    const missingSelection = (requiredOptions as string[]).find(slug => !selectedVariants[slug]) || (product.compatibleModels?.length > 0 && !selectedModel ? 'Model' : undefined);
     const isSelectionComplete = !missingSelection;
 
     const contactPhone = settingsData?.settings?.contactPhone || '';
     const whatsappNumber = settingsData?.settings?.whatsapp || contactPhone;
 
     const currentStock = activeVariant ? (activeVariant.stock || 0) : (product?.stock || 0);
-    const currentCartItem = items.find((item: any) => item.productId === product?._id && isSameVariant(item.variant, selectedVariants));
+    // Find cart item using proper format
+    const checkVariantToSync = { ...selectedVariants };
+    if (selectedModel) checkVariantToSync['model'] = selectedModel;
+    if (activeVariant?.colorCode) checkVariantToSync.colorCode = activeVariant.colorCode;
+    
+    const currentCartItem = items.find((item: any) => 
+        item.productId === product?._id && 
+        isSameVariant(item.variant, { attributes: checkVariantToSync })
+    );
     const cartItemQuantity = currentCartItem ? currentCartItem.quantity : 0;
     const availableToBuy = (product?.preorder && currentStock <= 0) ? 99 : Math.max(0, currentStock - cartItemQuantity);
 
-    const handleVariantChange = (type: string, value: string) => {
+    const handleVariantChange = (slug: string, value: string) => {
         if (selectionError) setSelectionError(null);
 
         // Toggle off if clicking the already-selected option
-        if (selectedVariants[type] === value) {
+        if (selectedVariants[slug] === value) {
             const updated = { ...selectedVariants };
-            delete updated[type];
+            delete updated[slug];
             setSelectedVariants(updated);
             return;
         }
-        const fieldMap: Record<string, string> = { 'Size': 'size', 'Color': 'colorName', 'Material': 'material', 'Model': 'model' };
-        const field = fieldMap[type] || type.toLowerCase();
-        const nextSelections = { ...selectedVariants, [type]: value };
+        
+        const nextSelections = { ...selectedVariants, [slug]: value };
 
-        const exactMatch = product.variants?.find((v: any) =>
-            Object.entries(nextSelections).every(([k, val]) => {
-                const vf = fieldMap[k] || k.toLowerCase();
+        const exactMatch = product.variants?.find((v: any) => {
+            if (v.attributes && Object.keys(v.attributes).length > 0) {
+                return Object.entries(nextSelections).every(([k, val]) => v.attributes[k] === val);
+            }
+            // Fallback for legacy
+            const fieldMap: Record<string, string> = { 'size': 'size', 'color': 'colorName', 'material': 'material', 'ram': 'ram', 'storage': 'storage' };
+            return Object.entries(nextSelections).every(([k, val]) => {
+                const vf = fieldMap[k] || k;
                 return v[vf] === val;
-            })
-        );
+            });
+        });
 
         if (exactMatch) {
             setSelectedVariants(nextSelections);
@@ -183,14 +187,26 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
             if (quantity > matchStock && matchStock > 0) setQuantity(matchStock);
             else if (matchStock === 0) setQuantity(1);
         } else {
-            const bestFit = product.variants?.find((v: any) => v[field] === value);
+            // Find a variant that has the newly clicked value
+            const bestFit = product.variants?.find((v: any) => {
+                if (v.attributes && v.attributes[slug] === value) return true;
+                const fieldMap: Record<string, string> = { 'size': 'size', 'color': 'colorName', 'material': 'material', 'ram': 'ram', 'storage': 'storage' };
+                const vf = fieldMap[slug] || slug;
+                return v[vf] === value;
+            });
+            
             if (bestFit) {
                 const smart: Record<string, string> = { ...selectedVariants };
-                ['Size', 'Color', 'Material', 'Model'].forEach(k => {
-                    const kf = fieldMap[k] || k.toLowerCase();
-                    if (bestFit[kf]) smart[k] = bestFit[kf];
+                // Keep only selections that also exist on this bestFit variant
+                requiredOptions.forEach(k => {
+                    if (bestFit.attributes && bestFit.attributes[k]) smart[k] = bestFit.attributes[k];
+                    else {
+                        const fieldMap: Record<string, string> = { 'size': 'size', 'color': 'colorName', 'material': 'material', 'ram': 'ram', 'storage': 'storage' };
+                        const kf = fieldMap[k] || k;
+                        if (bestFit[kf]) smart[k] = bestFit[kf];
+                    }
                 });
-                smart[type] = value;
+                smart[slug] = value;
                 setSelectedVariants(smart);
                 const fitStock = bestFit.stock || 0;
                 if (quantity > fitStock && fitStock > 0) setQuantity(fitStock);
@@ -203,10 +219,14 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
 
     const handleAddToCart = () => {
         if (!isSelectionComplete) { setSelectionError({ type: missingSelection!, source: 'cart' }); return; }
+        
+        // Build variant metadata to sync with cart
         const variantToSync: any = { ...selectedVariants };
-        if (selectedModel) variantToSync['Model'] = selectedModel;
+        if (selectedModel) variantToSync['model'] = selectedModel;
         if (activeVariant?.colorCode) variantToSync.colorCode = activeVariant.colorCode;
         if (activeVariant?.tax !== undefined) variantToSync.tax = activeVariant.tax;
+        if (selectedModel) variantToSync.model = selectedModel;
+
         addToCart({
             ...product,
             isPreorder: product.preorder && currentStock <= 0,
@@ -219,7 +239,6 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
             title: `${product.title}${Object.values(selectedVariants).length ? ` (${Object.values(selectedVariants).join(', ')})` : ''}`,
         }, quantity, variantToSync);
 
-        // Meta Pixel: Track AddToCart
         trackAddToCart({
             content_ids: [String(product._id)],
             contents: [{ 
@@ -238,10 +257,13 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
 
     const handleBuyNow = () => {
         if (!isSelectionComplete) { setSelectionError({ type: missingSelection!, source: 'buy' }); return; }
+        
         const variantToSync: any = { ...selectedVariants };
-        if (selectedModel) variantToSync['Model'] = selectedModel;
+        if (selectedModel) variantToSync['model'] = selectedModel;
         if (activeVariant?.colorCode) variantToSync.colorCode = activeVariant.colorCode;
         if (activeVariant?.tax !== undefined) variantToSync.tax = activeVariant.tax;
+        if (selectedModel) variantToSync.model = selectedModel;
+
         sessionStorage.setItem('directBuyItem', JSON.stringify([{
             productId: (product as any)._id || (product as any).id || (product as any).productId,
             title: `${product.title}${Object.values(selectedVariants).length ? ` (${Object.values(selectedVariants).join(', ')})` : ''}`,
@@ -257,110 +279,160 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
             isPreorder: product.preorder && currentStock <= 0,
         }]));
 
-        // Redirects to checkout page, where trackInitiateCheckout will fire on page load.
         router.push('/checkout?directBuy=true');
     };
 
-    // Variant selector JSX (inline — stays in orchestrator since it needs local state)
-    const variantSlot = product.variants?.length > 0 ? (
-        <div className="space-y-2 lg:space-y-4 pt-1 lg:pt-2">
-            {(['Size', 'Color', 'Material', 'Model'] as const).map(variantType => {
-                const fieldMap: Record<string, string> = { 'Size': 'size', 'Color': 'colorName', 'Material': 'material', 'Model': 'model' };
-                const field = fieldMap[variantType];
-                const rawOptions = [...new Set(product.variants?.map((v: any) => v[field]).filter(Boolean))] as string[];
-                const options = [...rawOptions].sort((a, b) => {
-                    const list = variantType === 'Size' ? globalOptions?.sizes : variantType === 'Color' ? globalOptions?.colors : variantType === 'Model' ? globalOptions?.models : globalOptions?.materials;
-                    const oA = list?.find((o: any) => o.label === a)?.order ?? 999;
-                    const oB = list?.find((o: any) => o.label === b)?.order ?? 999;
-                    return oA - oB;
-                });
-                if (options.length === 0) return null;
+    // Split options into main column and sidebar based on option count threshold
+    const OPTION_THRESHOLD = 10;
+    const mainColumnOptions: string[] = [];
+    const sidebarOptions: string[] = [];
+    const optionsData: Record<string, string[]> = {};
 
-                return (
-                    <div key={variantType}>
-                        <div className="flex items-center gap-2 mb-1 lg:mb-2">
-                            <span className="text-[10px] lg:text-xs font-black text-gray-700 uppercase tracking-wide">Select {variantType}</span>
-                            {selectedVariants[variantType] && (
-                                <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{selectedVariants[variantType]}</span>
-                            )}
-                            {variantType === 'Size' && (typeof product.sizeGuide === 'object' ? (product.sizeGuide as any).image : product.sizeGuide) && (
-                                <button 
-                                    type="button" 
-                                    onClick={() => setShowSizeGuide(true)}
-                                    className="ml-auto flex items-center gap-1.5 text-[10px] lg:text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors uppercase tracking-widest border border-gray-200 px-2.5 py-1 rounded-md bg-gray-50 hover:bg-gray-100"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 lg:w-3.5 lg:h-3.5">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 13.5V3.75m0 9.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 3.75V16.5m12-3V3.75m0 9.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 3.75V16.5m-6-9V3.75m0 3.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 9.75V10.5" />
-                                    </svg>
-                                    Size Guide
-                                </button>
-                            )}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {options.map(opt => {
-                                const isColor = variantType === 'Color';
-                                const matchingVariant = isColor ? product.variants?.find((v: any) => v.colorName === opt) : null;
-                                const colorHex = isColor ? (matchingVariant?.colorCode || opt) : null;
-                                const isSelected = selectedVariants[variantType] === opt;
+    if (product.variants?.length > 0) {
+        requiredOptions.forEach(slug => {
+            const rawOptions = [...new Set(product.variants?.map((v: any) => {
+                if (v.attributes && v.attributes[slug]) return v.attributes[slug];
+                const fieldMap: Record<string, string> = { 'size': 'size', 'color': 'colorName', 'material': 'material', 'ram': 'ram', 'storage': 'storage' };
+                const vf = fieldMap[slug] || slug;
+                return v[vf];
+            }).filter(Boolean))] as string[];
+            
+            optionsData[slug] = rawOptions;
+            if (rawOptions.length > OPTION_THRESHOLD) {
+                sidebarOptions.push(slug);
+            } else {
+                mainColumnOptions.push(slug);
+            }
+        });
+    }
 
-                                return (
-                                    <button
-                                        key={opt}
-                                        onClick={() => handleVariantChange(variantType, opt)}
-                                        style={isColor ? { backgroundColor: colorHex || opt } : {}}
-                                        title={opt}
-                                        className={`relative transition-all ${isColor
-                                            ? `w-6 h-6 lg:w-7 lg:h-7 rounded-full border-2 ${isSelected ? 'border-orange-500 scale-110' : 'border-gray-300 hover:border-orange-400'}`
-                                            : `px-2 lg:px-3 py-1 lg:py-1.5 rounded border text-[11px] lg:text-xs font-bold ${isSelected ? 'border-orange-500 bg-orange-500 text-white' : 'border-gray-200 text-gray-700 hover:border-orange-400'}`
-                                        }`}
-                                    >
-                                        {!isColor && opt}
-                                        {isColor && isSelected && (
-                                            <span className="absolute inset-0 flex items-center justify-center text-white">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                                            </span>
-                                        )}
-                                    </button>
+    const renderOptionGroup = (slug: string) => {
+        const rawOptions = optionsData[slug];
+        if (!rawOptions || rawOptions.length === 0) return null;
+        
+        // Get global attribute info for sorting and display names
+        const globalAttr = globalAttributes.find((a: any) => a.slug === slug);
+        const attrName = globalAttr?.name || slug.charAt(0).toUpperCase() + slug.slice(1);
+        const isColor = globalAttr?.type === 'color' || slug === 'color';
+        
+        // Sort options based on global order if available
+        const options = [...rawOptions].sort((a, b) => {
+            const valA = globalAttr?.values?.find((v: any) => v.label === a);
+            const valB = globalAttr?.values?.find((v: any) => v.label === b);
+            return (valA?.order ?? 999) - (valB?.order ?? 999);
+        });
+
+        return (
+            <div key={slug} className={sidebarOptions.includes(slug) ? "mt-4 first:mt-0" : ""}>
+                <div className="flex items-center gap-2 mb-1 lg:mb-2 border-b border-gray-100 pb-2">
+                    <span className="text-[10px] lg:text-xs font-black text-gray-700 uppercase tracking-wide">Select {attrName}</span>
+                    {selectedVariants[slug] && (
+                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{selectedVariants[slug]}</span>
+                    )}
+                    {slug === 'size' && (typeof product.sizeGuide === 'object' ? (product.sizeGuide as any).image : product.sizeGuide) && (
+                        <button 
+                            type="button" 
+                            onClick={() => setShowSizeGuide(true)}
+                            className="ml-auto flex items-center gap-1.5 text-[10px] lg:text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors uppercase tracking-widest border border-gray-200 px-2.5 py-1 rounded-md bg-gray-50 hover:bg-gray-100"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 lg:w-3.5 lg:h-3.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 13.5V3.75m0 9.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 3.75V16.5m12-3V3.75m0 9.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 3.75V16.5m-6-9V3.75m0 3.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 9.75V10.5" />
+                            </svg>
+                            Size Guide
+                        </button>
+                    )}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                    {options.map(opt => {
+                        // For color swatches, try to find color code from global attributes first, then variants
+                        let colorCode: string | undefined = undefined;
+                        if (isColor) {
+                            const globalVal = globalAttr?.values?.find((v: any) => v.label === opt);
+                            if (globalVal?.colorCode) {
+                                colorCode = globalVal.colorCode;
+                            } else {
+                                // Fallback to variant legacy field
+                                const matchingVariant = product.variants?.find((v: any) => 
+                                    v.attributes && v.attributes[slug] === opt
                                 );
-                            })}
-                        </div>
-                    </div>
-                );
-            })}
+                                colorCode = matchingVariant?.colorCode;
+                            }
+                        }
+
+                        const isSelected = selectedVariants[slug] === opt;
+                        const isMissing = selectionError?.type === slug;
+
+                        return (
+                            <button
+                                key={opt}
+                                type="button"
+                                onClick={() => handleVariantChange(slug, opt)}
+                                className={`relative group px-3 lg:px-4 py-1.5 lg:py-2 border rounded-lg text-[11px] lg:text-xs font-bold transition-all overflow-hidden
+                                    ${isSelected 
+                                        ? 'bg-gray-900 border-gray-900 text-white shadow-md shadow-gray-900/20' 
+                                        : isMissing
+                                            ? 'bg-rose-50 border-rose-300 text-rose-600 animate-pulse-fast'
+                                            : 'bg-white border-gray-200 text-gray-700 hover:border-gray-400 hover:bg-gray-50'
+                                    }
+                                `}
+                            >
+                                <div className="flex items-center gap-2 relative z-10">
+                                    {isColor && colorCode && (
+                                        <span 
+                                            className={`w-3 h-3 lg:w-3.5 lg:h-3.5 rounded-full shadow-inner ${isSelected ? 'ring-2 ring-white/40' : 'ring-1 ring-black/10'}`}
+                                            style={{ backgroundColor: colorCode }}
+                                        />
+                                    )}
+                                    {opt}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
+    // Variant selector JSX for main column
+    const mainVariantSlot = mainColumnOptions.length > 0 ? (
+        <div className="space-y-2 lg:space-y-4 pt-1 lg:pt-2">
+            {mainColumnOptions.map(renderOptionGroup)}
         </div>
     ) : null;
 
-    const hasManyModels = product.compatibleModels && (product.compatibleModels.length > 3 || product.compatibleModels.join('').length > 25);
+    // Variant selector JSX for sidebar column
+    const sidebarVariantSlot = sidebarOptions.length > 0 ? (
+        <div className="space-y-2 lg:space-y-4">
+            {sidebarOptions.map(renderOptionGroup)}
+        </div>
+    ) : null;
 
-    const categoryId = product.category?._id || product.category;
-    const subCategoryId = product.subCategory?._id || product.subCategory;
-    const childCategoryId = product.childCategory?._id || product.childCategory;
-    const subChildCategoryId = product.subChildCategory?._id || product.subChildCategory;
+    const hasManyModels = product.compatibleModels?.length > 1;
+    const showSidebarVariants = sidebarOptions.length > 0 || hasManyModels;
 
     return (
-        <div className="min-h-screen bg-white">
-            {/* Breadcrumb */}
-            <div className="bg-gray-50 border-b border-gray-100">
-                <div className="container mx-auto px-4 py-2">
-                    <nav>
-                        <ol className="flex items-center gap-1.5 text-xs text-gray-400 flex-wrap">
-                            <li><Link href="/" className="hover:text-orange-500 transition-colors">Home</Link></li>
-                            <li className="text-gray-200">/</li>
-                            <li><Link href="/products" className="hover:text-orange-500 transition-colors">Shop</Link></li>
-                            {product.category && (
-                                <>
-                                    <li className="text-gray-200">/</li>
-                                    <li><Link href={`/products?category=${product.category.slug}`} className="hover:text-orange-500 transition-colors">{product.category.name}</Link></li>
-                                </>
-                            )}
-                            <li className="text-gray-200">/</li>
-                            <li className="text-gray-700 font-semibold truncate max-w-[180px]">{product.title}</li>
-                        </ol>
-                    </nav>
+        <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
+            {/* Breadcrumbs */}
+            <div className="bg-white border-b border-gray-100">
+                <div className="container mx-auto px-4 py-3">
+                    <div className="flex items-center gap-2 text-[10px] lg:text-xs font-bold uppercase tracking-widest text-gray-400 overflow-x-auto whitespace-nowrap hide-scrollbar">
+                        <Link href="/" className="hover:text-indigo-600 transition-colors">Home</Link>
+                        <span>/</span>
+                        <Link href="/products" className="hover:text-indigo-600 transition-colors">Products</Link>
+                        {product.category && (
+                            <>
+                                <span>/</span>
+                                <Link href={`/products?category=${product.category.slug}`} className="hover:text-indigo-600 transition-colors">
+                                    {product.category.name}
+                                </Link>
+                            </>
+                        )}
+                        <span>/</span>
+                        <span className="text-gray-900 truncate max-w-[200px] lg:max-w-none">{product.title}</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Main 3-column grid */}
             <div className="container mx-auto px-4 py-4 lg:py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
 
@@ -398,38 +470,48 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
                             contactPhone={contactPhone}
                             variantSlot={
                                 <>
-                                    {variantSlot}
-                                    <div className={hasManyModels ? "block lg:hidden" : "block"}>
-                                        <CompatibleModelsSelector 
-                                            models={product.compatibleModels}
-                                            selectedModel={selectedModel}
-                                            onSelect={(opt) => {
-                                                setSelectionError(null);
-                                                setSelectedModel(opt);
-                                            }}
-                                        />
+                                    {mainVariantSlot}
+                                    <div className={showSidebarVariants ? "block lg:hidden mt-4 space-y-4" : "block"}>
+                                        {sidebarVariantSlot}
+                                        
+                                        {hasManyModels && (
+                                            <CompatibleModelsSelector 
+                                                models={product.compatibleModels}
+                                                selectedModel={selectedModel}
+                                                onSelect={(opt) => {
+                                                    setSelectionError(null);
+                                                    setSelectedModel(opt);
+                                                }}
+                                            />
+                                        )}
                                     </div>
                                 </>
                             }
                         />
                     </div>
 
-                    {/* Col 3: More Products Sidebar — bottom-up (most specific first) */}
+                    {/* Col 3: More Products Sidebar */}
                     <div className="lg:col-span-3 hidden lg:block lg:pl-6 xl:pl-10">
                         <div className="border border-gray-100 rounded-xl p-4 sticky top-6 lg:-mt-4 bg-white">
-                            {hasManyModels ? (
-                                <div className="mt-2">
-                                    <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2 uppercase tracking-wide text-sm">
-                                        Choose Your Model
-                                    </h3>
-                                    <CompatibleModelsSelector 
-                                        models={product.compatibleModels}
-                                        selectedModel={selectedModel}
-                                        onSelect={(opt) => {
-                                            setSelectionError(null);
-                                            setSelectedModel(opt);
-                                        }}
-                                    />
+                            {showSidebarVariants ? (
+                                <div className="mt-2 space-y-6">
+                                    {sidebarVariantSlot}
+                                    
+                                    {hasManyModels && (
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2 uppercase tracking-wide text-sm">
+                                                Choose Your Model
+                                            </h3>
+                                            <CompatibleModelsSelector 
+                                                models={product.compatibleModels}
+                                                selectedModel={selectedModel}
+                                                onSelect={(opt) => {
+                                                    setSelectionError(null);
+                                                    setSelectedModel(opt);
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <ProductMoreSidebar
@@ -447,7 +529,7 @@ export default function ProductDetailClient({ product: initialProduct, globalOpt
                 {/* Tabs Section */}
                 <ProductTabsSection product={product} />
 
-                {/* Related Products — top-down (broadest first) */}
+                {/* Related Products */}
                 <div className="mt-8">
                     <RelatedProducts
                         currentProductId={product._id}

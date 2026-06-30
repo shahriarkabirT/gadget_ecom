@@ -80,10 +80,18 @@ export async function POST(request: Request) {
             if (item.variant && Object.keys(item.variant).length > 0) {
                 // Find matching variant
                 const variant = product.variants.find((v: any) => {
-                    const sizeMatch = !v.size || item.variant['Size'] === v.size;
-                    const colorMatch = !v.colorName || item.variant['Color'] === v.colorName;
-                    const materialMatch = !v.material || item.variant['Material'] === v.material;
-                    const modelMatch = !v.model || item.variant['Model'] === v.model;
+                    const itemVar = item.variant.attributes || item.variant;
+                    if (v.attributes && Object.keys(v.attributes).length > 0) {
+                        return Object.entries(itemVar).every(([slug, val]) => {
+                            if (slug === 'colorCode' || slug === 'tax') return true;
+                            if (slug.toLowerCase() === 'model') return !v.attributes['model'] || v.attributes['model'] === val;
+                            return v.attributes[slug] === val || v.attributes[slug.toLowerCase()] === val;
+                        });
+                    }
+                    const sizeMatch = !v.size || itemVar['Size'] === v.size || itemVar['size'] === v.size;
+                    const colorMatch = !v.colorName || itemVar['Color'] === v.colorName || itemVar['color'] === v.colorName || itemVar['colorName'] === v.colorName;
+                    const materialMatch = !v.material || itemVar['Material'] === v.material || itemVar['material'] === v.material;
+                    const modelMatch = !v.model || itemVar['Model'] === v.model || itemVar['model'] === v.model;
                     return sizeMatch && colorMatch && materialMatch && modelMatch;
                 });
 

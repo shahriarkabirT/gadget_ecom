@@ -8,9 +8,13 @@ export interface ISEOMetadata {
 
 export interface IVariant {
     _id: string;
+    /** Dynamic attribute map: { "size": "M", "color": "Red", "screen-size": "6.5 inch" } */
+    attributes?: Record<string, string>;
+    /** Quick-access color code for storefront swatch rendering */
+    colorCode?: string;
+    // Legacy named fields (kept for backward compatibility)
     size?: string;
     colorName?: string;
-    colorCode?: string;
     material?: string;
     ram?: string;
     storage?: string;
@@ -28,6 +32,29 @@ export interface IVariant {
     weight?: number | null; // Weight in kg or grams
     inventoryRef?: string;
     order: number;
+}
+
+export interface IAttribute {
+    _id: string;
+    name: string;
+    slug: string;
+    type: 'text' | 'color';
+    order: number;
+    isActive: boolean;
+    values?: IAttributeValue[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface IAttributeValue {
+    _id: string;
+    attributeId: string;
+    label: string;
+    colorCode?: string;
+    order: number;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface IVariantOption {

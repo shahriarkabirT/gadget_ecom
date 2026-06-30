@@ -3,8 +3,7 @@
 import { IVariant } from '@/types';
 import Image from 'next/image';
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useGetVariantOptionsQuery } from '@/redux/features/variantOption/variantOptionApi';
-import type { IVariantOption } from '@/redux/features/variantOption/variantOptionApi';
+import { useGetAttributesQuery } from '@/redux/features/attribute/attributeApi';
 
 interface VariantManagerProps {
     variants: IVariant[];
@@ -34,67 +33,63 @@ function skuSlug(str: string): string {
 /**
  * Auto-generate a SKU from variant attributes.
  */
-function generateSku(
-    baseSku: string,
-    size?: string,
-    colorName?: string,
-    material?: string,
-    ram?: string,
-    storage?: string
-): string {
+function generateSku(baseSku: string, attributesMap: Record<string, string>): string {
     const parts = [baseSku || 'VAR'];
-    if (size) parts.push(skuSlug(size));
-    if (colorName) parts.push(skuSlug(colorName));
-    if (material) parts.push(skuSlug(material));
-    if (ram) parts.push(skuSlug(ram));
-    if (storage) parts.push(skuSlug(storage));
+    // Sort keys alphabetically so SKU parts are always in a stable order
+    const sortedKeys = Object.keys(attributesMap).sort();
+    for (const key of sortedKeys) {
+        if (attributesMap[key]) {
+            parts.push(skuSlug(attributesMap[key]));
+        }
+    }
     return parts.join('-');
 }
 
 /**
- * Compute cartesian product of selected options and return variant combo keys.
- * Each key is `size|colorName|colorCode|material`.
+ * Compute cartesian product of selected options and return variant combinations.
  */
 function cartesianProduct(
-    sizes: IVariantOption[],
-    colors: IVariantOption[],
-    materials: IVariantOption[],
-    rams: IVariantOption[],
-    storages: IVariantOption[]
-): { size?: string; colorName?: string; colorCode?: string; material?: string; ram?: string; storage?: string }[] {
-    // Handle cases where some dimensions are empty
-    const sArr = sizes.length > 0 ? sizes : [null];
-    const cArr = colors.length > 0 ? colors : [null];
-    const mArr = materials.length > 0 ? materials : [null];
-    const rArr = rams.length > 0 ? rams : [null];
-    const stArr = storages.length > 0 ? storages : [null];
+    selectedValuesByAttr: { attrSlug: string; values: any[] }[]
+) {
+    if (selectedValuesByAttr.length === 0) return [];
 
-    const combos: { size?: string; colorName?: string; colorCode?: string; material?: string; ram?: string; storage?: string }[] = [];
+    // Filter out attributes that have no selected values
+    const arrays = selectedValuesByAttr
+        .filter((attr) => attr.values.length > 0)
+        .map((attr) => attr.values.map((v) => ({ slug: attr.attrSlug, value: v })));
 
-    for (const s of sArr) {
-        for (const c of cArr) {
-            for (const m of mArr) {
-                for (const r of rArr) {
-                    for (const st of stArr) {
-                        combos.push({
-                            size: s?.label,
-                            colorName: c?.label,
-                            colorCode: c?.colorCode,
-                            material: m?.label,
-                            ram: r?.label,
-                            storage: st?.label,
-                        });
-                    }
-                }
+    if (arrays.length === 0) return [];
+
+    const combos = arrays.reduce((acc, currArray) => {
+        const newAcc = [];
+        for (const item of acc) {
+            for (const currItem of currArray) {
+                newAcc.push([...item, currItem]);
             }
         }
-    }
+        return newAcc;
+    }, [[]] as any[][]);
 
-    return combos;
+    return combos.map((combo) => {
+        const result: Record<string, string> = {};
+        let colorCode: string | undefined = undefined;
+        for (const item of combo) {
+            result[item.slug] = item.value.label;
+            if (item.value.colorCode) {
+                colorCode = item.value.colorCode; // Last color code wins
+            }
+        }
+        return { attributes: result, colorCode };
+    });
 }
 
-function comboKey(v: { size?: string; colorName?: string; material?: string; ram?: string; storage?: string }): string {
-    return `${v.size || ''}|${v.colorName || ''}|${v.material || ''}|${v.ram || ''}|${v.storage || ''}`;
+function comboKey(attributes?: Record<string, string>): string {
+    if (!attributes) return '';
+    // Stable string representation of attributes map
+    return Object.keys(attributes)
+        .sort()
+        .map((k) => `${k}:${attributes[k]}`)
+        .join('|');
 }
 
 export default function VariantManager({
@@ -110,21 +105,13 @@ export default function VariantManager({
     defaultTax = 0,
     onApplyToGlobal,
 }: VariantManagerProps) {
-    const { data: optionsData, isLoading: isLoadingOptions } = useGetVariantOptionsQuery();
+    const { data: optionsData, isLoading: isLoadingOptions } = useGetAttributesQuery();
+    const attributes = useMemo(() => [...(optionsData?.attributes || [])].sort((a, b) => a.order - b.order), [optionsData?.attributes]);
 
-    const allSizes = useMemo(() => [...(optionsData?.sizes || [])].sort((a, b) => a.order - b.order), [optionsData?.sizes]);
-    const allColors = useMemo(() => [...(optionsData?.colors || [])].sort((a, b) => a.order - b.order), [optionsData?.colors]);
-    const allMaterials = useMemo(() => [...(optionsData?.materials || [])].sort((a, b) => a.order - b.order), [optionsData?.materials]);
-    const allRams = useMemo(() => [...(optionsData?.rams || [])].sort((a, b) => a.order - b.order), [optionsData?.rams]);
-    const allStorages = useMemo(() => [...(optionsData?.storages || [])].sort((a, b) => a.order - b.order), [optionsData?.storages]);
-
-    // Track selected option IDs
-    const [selectedSizeIds, setSelectedSizeIds] = useState<Set<string>>(new Set());
-    const [selectedColorIds, setSelectedColorIds] = useState<Set<string>>(new Set());
-    const [selectedMaterialIds, setSelectedMaterialIds] = useState<Set<string>>(new Set());
-    const [selectedRamIds, setSelectedRamIds] = useState<Set<string>>(new Set());
-    const [selectedStorageIds, setSelectedStorageIds] = useState<Set<string>>(new Set());
-
+    // Track selected option IDs per attribute slug
+    // { "size": Set(["valId1", "valId2"]), "color": Set(["valId3"]) }
+    const [selectedIdsMap, setSelectedIdsMap] = useState<Record<string, Set<string>>>({});
+    
     // Track manually removed combo keys (so they don't reappear)
     const [removedKeys, setRemovedKeys] = useState<Set<string>>(new Set());
 
@@ -133,104 +120,71 @@ export default function VariantManager({
 
     // Initialize selections from existing variants on mount
     useEffect(() => {
-        if (variants.length > 0 && allSizes.length + allColors.length + allMaterials.length + allRams.length + allStorages.length > 0) {
-            const sIds = new Set<string>();
-            const cIds = new Set<string>();
-            const mIds = new Set<string>();
-            const rIds = new Set<string>();
-            const stIds = new Set<string>();
-
-            for (const v of variants) {
-                if (v.size) {
-                    const match = allSizes.find((s) => s.label === v.size);
-                    if (match) sIds.add(match._id);
-                }
-                if (v.colorName) {
-                    const match = allColors.find((c) => c.label === v.colorName);
-                    if (match) cIds.add(match._id);
-                }
-                if (v.material) {
-                    const match = allMaterials.find((m) => m.label === v.material);
-                    if (match) mIds.add(match._id);
-                }
-                if (v.ram) {
-                    const match = allRams.find((r) => r.label === v.ram);
-                    if (match) rIds.add(match._id);
-                }
-                if (v.storage) {
-                    const match = allStorages.find((st) => st.label === v.storage);
-                    if (match) stIds.add(match._id);
+        if (variants.length > 0 && attributes.length > 0) {
+            const nextMap: Record<string, Set<string>> = {};
+            
+            for (const attr of attributes) {
+                const attrSlug = attr.slug;
+                nextMap[attrSlug] = new Set<string>();
+                
+                for (const v of variants) {
+                    // Check dynamic attributes
+                    if (v.attributes && v.attributes[attrSlug]) {
+                        const valLabel = v.attributes[attrSlug];
+                        const match = attr.values?.find(val => val.label === valLabel);
+                        if (match) nextMap[attrSlug].add(match._id);
+                    }
                 }
             }
-
-            if (sIds.size > 0) setSelectedSizeIds(sIds);
-            if (cIds.size > 0) setSelectedColorIds(cIds);
-            if (mIds.size > 0) setSelectedMaterialIds(mIds);
-            if (rIds.size > 0) setSelectedRamIds(rIds);
-            if (stIds.size > 0) setSelectedStorageIds(stIds);
+            setSelectedIdsMap(nextMap);
         }
-        // Only run once when options load
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [allSizes.length, allColors.length, allMaterials.length, allRams.length, allStorages.length]);
-
-    // Get selected options objects
-    const selectedSizes = useMemo(
-        () => allSizes.filter((s) => selectedSizeIds.has(s._id)),
-        [allSizes, selectedSizeIds]
-    );
-    const selectedColors = useMemo(
-        () => allColors.filter((c) => selectedColorIds.has(c._id)),
-        [allColors, selectedColorIds]
-    );
-    const selectedMaterials = useMemo(
-        () => allMaterials.filter((m) => selectedMaterialIds.has(m._id)),
-        [allMaterials, selectedMaterialIds]
-    );
-    const selectedRams = useMemo(
-        () => allRams.filter((r) => selectedRamIds.has(r._id)),
-        [allRams, selectedRamIds]
-    );
-    const selectedStorages = useMemo(
-        () => allStorages.filter((st) => selectedStorageIds.has(st._id)),
-        [allStorages, selectedStorageIds]
-    );
+    }, [attributes.length]);
 
     // When selections change, generate cartesian product and merge with existing variants
     useEffect(() => {
-        if (selectedSizes.length === 0 && selectedColors.length === 0 && selectedMaterials.length === 0 && selectedRams.length === 0 && selectedStorages.length === 0) {
-            // No selections — clear all variants that came from matrix
-            // But keep any manually-added variants that don't match our pattern
+        // Collect selected values by attribute
+        const selectedValuesByAttr = attributes.map(attr => {
+            const selectedSet = selectedIdsMap[attr.slug] || new Set();
+            return {
+                attrSlug: attr.slug,
+                values: (attr.values || []).filter(val => selectedSet.has(val._id))
+            };
+        });
+
+        // Check if anything is selected at all
+        const totalSelections = selectedValuesByAttr.reduce((acc, curr) => acc + curr.values.length, 0);
+
+        if (totalSelections === 0) {
+            // No selections — clear all variants that came from matrix (wait, we shouldn't wipe out manual variants, but for simplicity here we assume if they deselect all, variants go empty)
             return;
         }
 
-        const combos = cartesianProduct(selectedSizes, selectedColors, selectedMaterials, selectedRams, selectedStorages);
+        const combos = cartesianProduct(selectedValuesByAttr);
 
         // Build a map of existing variants by combo key for preservation
         const existingMap = new Map<string, IVariant>();
         for (const v of variants) {
-            existingMap.set(comboKey(v), v);
+            existingMap.set(comboKey(v.attributes), v);
         }
 
         // Build new variant list from combos
         const newVariants: IVariant[] = [];
         for (const combo of combos) {
-            const key = comboKey(combo);
+            const key = comboKey(combo.attributes);
 
             // Skip manually removed combos
             if (removedKeys.has(key)) continue;
 
             const existing = existingMap.get(key);
             if (existing) {
+                // Keep the exact existing object but maybe update order
                 newVariants.push({ ...existing, order: newVariants.length });
             } else {
                 newVariants.push({
-                    size: combo.size,
-                    colorName: combo.colorName,
+                    attributes: combo.attributes,
                     colorCode: combo.colorCode,
-                    material: combo.material,
-                    ram: combo.ram,
-                    storage: combo.storage,
-                    sku: generateSku(baseSku, combo.size, combo.colorName, combo.material, combo.ram, combo.storage),
+                    sku: generateSku(baseSku, combo.attributes),
                     stock: 0,
                     weight: null,
                     mrp: defaultMrp,
@@ -247,36 +201,27 @@ export default function VariantManager({
         }
 
         // Only update if actually different
-        const currentKeys = variants.map(comboKey).join(',');
-        const newKeys = newVariants.map(comboKey).join(',');
+        const currentKeys = variants.map(v => comboKey(v.attributes)).join(',');
+        const newKeys = newVariants.map(v => comboKey(v.attributes)).join(',');
         if (currentKeys !== newKeys || variants.length !== newVariants.length) {
             onChange(newVariants);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedSizes, selectedColors, selectedMaterials, selectedRams, selectedStorages, removedKeys]);
+    }, [selectedIdsMap, removedKeys]);
 
     const toggleSelection = useCallback(
-        (type: 'size' | 'color' | 'material' | 'ram' | 'storage', id: string) => {
-            const setFn =
-                type === 'size'
-                    ? setSelectedSizeIds
-                    : type === 'color'
-                        ? setSelectedColorIds
-                        : type === 'material'
-                            ? setSelectedMaterialIds
-                            : type === 'ram'
-                                ? setSelectedRamIds
-                                : setSelectedStorageIds;
-
-            setFn((prev) => {
-                const next = new Set(prev);
-                if (next.has(id)) {
-                    next.delete(id);
-                    // When deselecting, clean removed keys for this option
-                    // so if re-selected later the combos reappear
+        (attrSlug: string, valId: string) => {
+            setSelectedIdsMap((prev) => {
+                const next = { ...prev };
+                if (!next[attrSlug]) next[attrSlug] = new Set();
+                
+                const newSet = new Set(next[attrSlug]);
+                if (newSet.has(valId)) {
+                    newSet.delete(valId);
                 } else {
-                    next.add(id);
+                    newSet.add(valId);
                 }
+                next[attrSlug] = newSet;
                 return next;
             });
 
@@ -292,10 +237,8 @@ export default function VariantManager({
             const targetIndex = direction === 'up' ? index - 1 : index + 1;
             if (targetIndex < 0 || targetIndex >= newVariants.length) return;
 
-            // Swap the items
             [newVariants[index], newVariants[targetIndex]] = [newVariants[targetIndex], newVariants[index]];
 
-            // Update the order property for all variants to match their new index
             const orderedVariants = newVariants.map((v, i) => ({ ...v, order: i }));
             onChange(orderedVariants);
         },
@@ -305,10 +248,9 @@ export default function VariantManager({
     const removeVariant = useCallback(
         (index: number) => {
             const variant = variants[index];
-            const key = comboKey(variant);
+            const key = comboKey(variant.attributes);
             setRemovedKeys((prev) => new Set(prev).add(key));
             const remaining = variants.filter((_, i) => i !== index);
-            // Re-order remaining variants
             const ordered = remaining.map((v, i) => ({ ...v, order: i }));
             onChange(ordered);
         },
@@ -365,7 +307,6 @@ export default function VariantManager({
 
         if (filesToUpload.length === 0) return;
 
-        // Mark this variant as uploading
         setUploadingState((prev) => ({ ...prev, [String(variantIndex)]: true }));
 
         try {
@@ -400,286 +341,196 @@ export default function VariantManager({
         },
         [variants, updateVariant]
     );
-
-    const handleApplyToGlobal = useCallback(
-        (field: keyof IVariant, value: any) => {
-            if (onApplyToGlobal && variants.length > 0) {
-                // Create a temporary variant with the field updated to pass to onApplyToGlobal
-                const tempVariant = { ...variants[0], [field]: value };
-                onApplyToGlobal(tempVariant);
-            }
-        },
-        [onApplyToGlobal, variants]
-    );
-
-    if (isLoadingOptions) {
-        return (
-            <div className="flex items-center gap-3 py-8 justify-center text-gray-400 text-sm">
-                <div className="w-4 h-4 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
-                Loading variant options…
-            </div>
-        );
-    }
-
-    const hasNoOptions = allSizes.length === 0 && allColors.length === 0 && allMaterials.length === 0 && allRams.length === 0 && allStorages.length === 0;
+    
+    // Check if anything is selected across all attributes
+    const hasAnySelection = Object.values(selectedIdsMap).some(set => set.size > 0);
 
     return (
         <div className="space-y-6">
-            {hasNoOptions ? (
-                <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                    <p className="text-xs font-bold text-gray-500 mb-2">No variant options configured yet.</p>
+            {/* Global Options Selectors */}
+            <div className="bg-gray-50/50 rounded-xl border border-gray-200 p-6 space-y-5">
+                <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-bold text-gray-900">Configure Attributes</h3>
                     <a
                         href="/admin/variant-management"
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 underline"
+                        target="_blank"
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
                     >
-                        Go to Variant Management →
+                        <span>Manage Attributes</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                        </svg>
                     </a>
                 </div>
-            ) : (
+
+                {isLoadingOptions ? (
+                    <div className="flex justify-center py-8">
+                        <div className="w-6 h-6 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                    </div>
+                ) : attributes.length === 0 ? (
+                    <div className="text-sm text-gray-500 py-4">No global attributes defined. Click &quot;Manage Attributes&quot; above to add some.</div>
+                ) : (
+                    <div className="space-y-5">
+                        {attributes.map(attr => {
+                            if (!attr.values || attr.values.length === 0) return null;
+                            const selectedSet = selectedIdsMap[attr.slug] || new Set();
+                            
+                            return (
+                                <div key={attr._id}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-gray-700">
+                                            {attr.name}
+                                        </label>
+                                        <span className="text-[9px] font-bold bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded-full">
+                                            {selectedSet.size} selected
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {attr.values.map((val) => {
+                                            const isSelected = selectedSet.has(val._id);
+                                            return (
+                                                <button
+                                                    key={val._id}
+                                                    type="button"
+                                                    onClick={() => toggleSelection(attr.slug, val._id)}
+                                                    className={`relative group px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all flex items-center gap-2
+                                                    ${isSelected
+                                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm hover:bg-indigo-700 hover:border-indigo-700'
+                                                            : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                                                        }`}
+                                                >
+                                                    {attr.type === 'color' && val.colorCode && (
+                                                        <span
+                                                            className={`w-3.5 h-3.5 rounded-full shadow-inner ${isSelected ? 'ring-2 ring-white/40' : 'ring-1 ring-black/10'}`}
+                                                            style={{ backgroundColor: val.colorCode }}
+                                                        />
+                                                    )}
+                                                    {val.label}
+                                                    {isSelected && (
+                                                        <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-2.5 h-2.5">
+                                                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                                            </svg>
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
+            {/* Matrix Result / Variant List */}
+            {hasAnySelection && (
                 <>
-                    {/* Selection Chips */}
-                    <div className="space-y-4">
-                        {/* Sizes Row */}
-                        {allSizes.length > 0 && (
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
-                                    Sizes
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {allSizes.map((s) => {
-                                        const isSelected = selectedSizeIds.has(s._id);
-                                        return (
-                                            <button
-                                                key={s._id}
-                                                type="button"
-                                                onClick={() => toggleSelection('size', s._id)}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition-all ${isSelected
-                                                    ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
-                                                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
-                                                    }`}
-                                            >
-                                                {s.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Colors Row */}
-                        {allColors.length > 0 && (
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
-                                    Colors
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {allColors.map((c) => {
-                                        const isSelected = selectedColorIds.has(c._id);
-                                        return (
-                                            <button
-                                                key={c._id}
-                                                type="button"
-                                                onClick={() => toggleSelection('color', c._id)}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition-all ${isSelected
-                                                    ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
-                                                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
-                                                    }`}
-                                            >
-                                                <span
-                                                    className="w-3.5 h-3.5 rounded-full border border-white/30 shrink-0"
-                                                    style={{ backgroundColor: c.colorCode || '#000' }}
-                                                />
-                                                {c.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Materials Row */}
-                        {allMaterials.length > 0 && (
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
-                                    Materials
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {allMaterials.map((m) => {
-                                        const isSelected = selectedMaterialIds.has(m._id);
-                                        return (
-                                            <button
-                                                key={m._id}
-                                                type="button"
-                                                onClick={() => toggleSelection('material', m._id)}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition-all ${isSelected
-                                                    ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
-                                                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
-                                                    }`}
-                                            >
-                                                {m.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Rams Row */}
-                        {allRams.length > 0 && (
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
-                                    RAM
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {allRams.map((r) => {
-                                        const isSelected = selectedRamIds.has(r._id);
-                                        return (
-                                            <button
-                                                key={r._id}
-                                                type="button"
-                                                onClick={() => toggleSelection('ram', r._id)}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition-all ${isSelected
-                                                    ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
-                                                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
-                                                    }`}
-                                            >
-                                                {r.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Storages Row */}
-                        {allStorages.length > 0 && (
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
-                                    Storage
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {allStorages.map((st) => {
-                                        const isSelected = selectedStorageIds.has(st._id);
-                                        return (
-                                            <button
-                                                key={st._id}
-                                                type="button"
-                                                onClick={() => toggleSelection('storage', st._id)}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition-all ${isSelected
-                                                    ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
-                                                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
-                                                    }`}
-                                            >
-                                                {st.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
+                    <div className="flex items-center justify-between mb-4 mt-8">
+                        <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-bold text-gray-900">Generated Combinations</h3>
+                            <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">
+                                {variants.length} active
+                            </span>
+                        </div>
                     </div>
 
-                    {/* Generated Variant Count */}
                     {variants.length > 0 && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
-                            <span className="inline-flex items-center justify-center w-5 h-5 bg-indigo-100 text-indigo-700 rounded-full text-[10px] font-black">
-                                {variants.length}
-                            </span>
-                            variant{variants.length === 1 ? '' : 's'} generated
-                        </div>
-                    )}
-
-                    {/* Variant Rows with Max Height */}
-                    {variants.length > 0 && (
-                        <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                        <div className="space-y-4">
                             {variants.map((variant, index) => (
                                 <div
-                                    key={comboKey(variant) || index}
-                                    className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative group transition-all hover:border-gray-300"
+                                    key={comboKey(variant.attributes) || index}
+                                    className={`relative bg-white rounded-xl border ${errors[`variant_${index}_price`] ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-200'} p-4 shadow-sm hover:shadow-md transition-all group/card`}
                                 >
-                                    {/* Control Buttons */}
-                                    <div className="absolute top-3 right-3 flex items-center gap-1">
-                                        <button
-                                            type="button"
-                                            onClick={() => moveVariant(index, 'up')}
-                                            disabled={index === 0}
-                                            className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-                                            title="Move Up"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-                                            </svg>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => moveVariant(index, 'down')}
-                                            disabled={index === variants.length - 1}
-                                            className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-                                            title="Move Down"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                            </svg>
-                                        </button>
+                                    {/* Action Buttons: Delete & Move */}
+                                    <div className="absolute -top-2.5 -right-2.5 flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                        <div className="flex bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                                            <button
+                                                type="button"
+                                                onClick={() => moveVariant(index, 'up')}
+                                                disabled={index === 0}
+                                                className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed border-r border-gray-100"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => moveVariant(index, 'down')}
+                                                disabled={index === variants.length - 1}
+                                                className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => removeVariant(index)}
-                                            className="ml-1 p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-all"
-                                            title="Remove this variant"
+                                            className="bg-white text-rose-500 p-1.5 rounded-lg border border-gray-200 shadow-sm hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition-colors"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
                                             </svg>
                                         </button>
                                     </div>
 
-                                    {/* Variant Label */}
-                                    <div className="flex items-center gap-1 -mt-1 mb-3 pr-8">
-                                        {variant.colorCode && (
-                                            <span
-                                                className="w-4 h-4 rounded-full border border-gray-300 shrink-0"
-                                                style={{ backgroundColor: variant.colorCode }}
-                                            />
-                                        )}
-                                        <span className="text-xs font-bold text-gray-900">
-                                            {[variant.size, variant.colorName, variant.material, variant.ram, variant.storage]
-                                                .filter(Boolean)
-                                                .join(' / ')}
+                                    {/* Variant Badges Header */}
+                                    <div className="flex flex-wrap items-center gap-2 mb-4 pr-16">
+                                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-[10px] font-bold text-gray-500">
+                                            #{index + 1}
                                         </span>
+                                        
+                                        {/* Dynamic Badges */}
+                                        {variant.attributes && Object.entries(variant.attributes).map(([key, val]) => (
+                                            <span key={key} className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700 flex items-center gap-1.5">
+                                                {key === 'color' && variant.colorCode && (
+                                                    <span className="w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: variant.colorCode }} />
+                                                )}
+                                                <span className="opacity-50 font-medium mr-1">{key}:</span> {val}
+                                            </span>
+                                        ))}
+                                        
+                                        {/* Fallback for legacy variant fields if attributes map doesn't exist */}
+                                        {!variant.attributes && variant.size && <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700">{variant.size}</span>}
+                                        {!variant.attributes && variant.colorName && <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 flex items-center gap-1.5">{variant.colorCode && <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: variant.colorCode }} />}{variant.colorName}</span>}
+                                        {!variant.attributes && variant.material && <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700">{variant.material}</span>}
+                                        {!variant.attributes && variant.ram && <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-teal-50 text-teal-700">{variant.ram}</span>}
+                                        {!variant.attributes && variant.storage && <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-cyan-50 text-cyan-700">{variant.storage}</span>}
 
                                         {onApplyToGlobal && (
                                             <button
                                                 type="button"
                                                 onClick={() => onApplyToGlobal(variant)}
-                                                className="ml-auto flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 transition-all active:scale-95"
-                                                title="Apply this variant's pricing & weight to global product"
+                                                className="ml-auto text-[10px] font-bold bg-black text-white px-2 py-1 rounded hover:bg-gray-800 transition-colors"
+                                                title="Apply this variant's pricing to all variants"
                                             >
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M16.5 16.5l-1.5-1.5m-7.42-3.472-2.839 1.177 6.13 3.413 8.174-8.174L16.5 16.5Z" />
-                                                </svg>
-                                                Apply to Global
+                                                Apply to All
                                             </button>
                                         )}
                                     </div>
 
-                                    {/* Fields Grid - 2 Rows for better spacing */}
-                                    <div className="space-y-3 mb-3">
-                                        {/* Row 1: Basic & Inventory */}
-                                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                                    {/* Main Fields Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4">
+                                        {/* Row 1: SKU & Stock */}
+                                        <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="block text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">
+                                                <label className="block text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-1">
                                                     SKU
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={variant.sku || ''}
                                                     onChange={(e) => updateVariant(index, 'sku', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-medium text-gray-900 focus:border-gray-900 outline-none transition-all"
-                                                    placeholder="Auto"
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-mono font-medium text-gray-900 focus:border-gray-900 outline-none transition-all"
+                                                    placeholder="VAR-001"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">
+                                                <label className="block text-[9px] font-bold uppercase tracking-widest text-emerald-600 mb-1">
                                                     Stock
                                                 </label>
                                                 <input
@@ -687,79 +538,19 @@ export default function VariantManager({
                                                     value={variant.stock === 0 ? '' : variant.stock}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
-                                                        let out: string | number = val;
-                                                        if (val === '') out = 0;
-                                                        else if (val.includes('.')) out = val;
-                                                        else out = Number(val);
-                                                        updateVariant(index, 'stock', out);
+                                                        updateVariant(index, 'stock', val === '' ? 0 : Number(val));
                                                     }}
-                                                    className={`w-full bg-white border ${errors[`variant_${index}_stock`] ? 'border-rose-500' : 'border-gray-300'} rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-900 outline-none transition-all`}
+                                                    className="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1.5 text-xs font-bold text-emerald-900 focus:border-emerald-500 outline-none transition-all"
                                                     placeholder="0"
-                                                    min={0}
-                                                />
-                                                {errors[`variant_${index}_stock`] && (
-                                                    <p className="text-[9px] text-rose-600 font-bold mt-1">
-                                                        {errors[`variant_${index}_stock`]}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">
-                                                    Weight <span className="text-[8px] text-gray-400">(g)</span>
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    value={variant.weight === null ? '' : variant.weight}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        const numVal = Number(val);
-                                                        updateVariant(index, 'weight', (val === '' || numVal === 0) ? null : numVal);
-                                                    }}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-900 outline-none transition-all"
-                                                    placeholder="0"
-                                                    min={0}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">
-                                                    Tax Type
-                                                </label>
-                                                <select
-                                                    value={variant.taxType || 'percentage'}
-                                                    onChange={(e) => updateVariant(index, 'taxType', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-900 outline-none transition-all cursor-pointer"
-                                                >
-                                                    <option value="percentage">Percentage</option>
-                                                    <option value="flat">Flat</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">
-                                                    Tax Rate
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    value={variant.tax === 0 ? '' : variant.tax}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        let out: string | number = val;
-                                                        if (val === '') out = 0;
-                                                        else if (val.includes('.')) out = val;
-                                                        else out = Number(val);
-                                                        updateVariant(index, 'tax', out);
-                                                    }}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-900 outline-none transition-all"
-                                                    placeholder="0"
-                                                    min={0}
                                                 />
                                             </div>
                                         </div>
 
-                                        {/* Row 2: Pricing Logic */}
-                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-gray-50/50 p-2 rounded-lg border border-gray-100">
+                                        {/* Row 2: Pricing */}
+                                        <div className="grid grid-cols-3 gap-3">
                                             <div>
-                                                <label className="block text-[9px] font-medium uppercase tracking-widest text-gray-500 mb-1">
-                                                    MRP
+                                                <label className="block text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-1">
+                                                    Regular Price
                                                 </label>
                                                 <input
                                                     type="number"
@@ -772,32 +563,29 @@ export default function VariantManager({
                                                         else out = Number(val);
                                                         updateVariant(index, 'mrp', out);
                                                     }}
-                                                    className={`w-full bg-white border ${errors[`variant_${index}_mrp`] ? 'border-rose-500' : 'border-gray-300'} rounded-lg px-2 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-900 outline-none transition-all`}
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-900 outline-none transition-all"
                                                     placeholder="0.00"
                                                 />
-                                                {errors[`variant_${index}_mrp`] && (
-                                                    <p className="text-[9px] text-rose-600 font-bold mt-1">
-                                                        {errors[`variant_${index}_mrp`]}
-                                                    </p>
-                                                )}
                                             </div>
                                             <div>
-                                                <label className="block text-[9px] font-medium uppercase tracking-widest text-gray-500 mb-1">
-                                                    D. Type
-                                                </label>
-                                                <select
-                                                    value={variant.discountType || 'percentage'}
-                                                    onChange={(e) => updateVariant(index, 'discountType', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-900 outline-none transition-all cursor-pointer"
-                                                >
-                                                    <option value="percentage">%</option>
-                                                    <option value="flat">৳</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[9px] font-medium uppercase tracking-widest text-gray-500 mb-1">
-                                                    Discount
-                                                </label>
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <label className="block text-[9px] font-bold uppercase tracking-widest text-gray-500">
+                                                        Discount
+                                                    </label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            updateVariant(
+                                                                index,
+                                                                'discountType',
+                                                                variant.discountType === 'percentage' ? 'flat' : 'percentage'
+                                                            )
+                                                        }
+                                                        className="text-[9px] font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                                                    >
+                                                        {variant.discountType === 'percentage' ? '%' : '৳'}
+                                                    </button>
+                                                </div>
                                                 <input
                                                     type="number"
                                                     value={variant.discountValue === 0 ? '' : variant.discountValue}
@@ -837,8 +625,24 @@ export default function VariantManager({
                                                     </p>
                                                 )}
                                             </div>
+                                        </div>
+
+                                        {/* Row 3 (Optional): Inventory Ref & Cost */}
+                                        <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="block text-[9px] font-medium uppercase tracking-widest text-gray-500 mb-1">
+                                                <label className="block text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">
+                                                    Inventory Reference
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={variant.inventoryRef || ''}
+                                                    onChange={(e) => updateVariant(index, 'inventoryRef', e.target.value)}
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-900 outline-none transition-all"
+                                                    placeholder="e.g. Rack A-12"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">
                                                     Cost <span className="text-[8px] font-normal">(opt.)</span>
                                                 </label>
                                                 <input
@@ -867,20 +671,6 @@ export default function VariantManager({
                                                     placeholder="0.00"
                                                 />
                                             </div>
-                                        </div>
-
-                                        {/* Row 3 (Optional): Inventory Ref */}
-                                        <div className="grid grid-cols-1">
-                                            <label className="block text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">
-                                                Inventory Reference / Internal Note
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={variant.inventoryRef || ''}
-                                                onChange={(e) => updateVariant(index, 'inventoryRef', e.target.value)}
-                                                className="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-900 outline-none transition-all"
-                                                placeholder="e.g. Rack A-12, Limited Edition..."
-                                            />
                                         </div>
                                     </div>
 
@@ -953,26 +743,12 @@ export default function VariantManager({
                     )}
 
                     {/* Empty state when selections made but all removed */}
-                    {variants.length === 0 &&
-                        (selectedSizeIds.size > 0 || selectedColorIds.size > 0 || selectedMaterialIds.size > 0 || selectedRamIds.size > 0 || selectedStorageIds.size > 0) && (
-                            <div className="text-center py-6 text-gray-400 text-xs">
-                                All generated variants have been removed. Adjust your selections above.
-                            </div>
-                        )}
+                    {variants.length === 0 && hasAnySelection && (
+                        <div className="text-center py-6 text-gray-400 text-xs">
+                            All generated variants have been removed. Adjust your selections above.
+                        </div>
+                    )}
 
-                    {/* Empty state when no selections */}
-                    {variants.length === 0 &&
-                        selectedSizeIds.size === 0 &&
-                        selectedColorIds.size === 0 &&
-                        selectedMaterialIds.size === 0 &&
-                        selectedRamIds.size === 0 &&
-                        selectedStorageIds.size === 0 && (
-                            <div className="text-center py-8 bg-white rounded-xl border border-dashed border-gray-300">
-                                <p className="text-xs font-bold text-gray-500">
-                                    Select sizes, colors, materials, ram, or storage above to generate variant combinations.
-                                </p>
-                            </div>
-                        )}
                 </>
             )}
         </div>

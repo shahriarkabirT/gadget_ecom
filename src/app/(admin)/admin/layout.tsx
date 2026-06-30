@@ -42,7 +42,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 { href: '/admin/products', label: 'All Products' },
                 { href: '/admin/products?status=published', label: 'Published' },
                 { href: '/admin/products?status=draft', label: 'Drafts' },
-                { href: '/admin/variant-management', label: 'Variant', icon: 'variants' },
+                { href: '/admin/variant-management', label: 'Attributes', icon: 'variants' },
                 { href: '/admin/brands', label: 'Brands', icon: 'brands' },
                 { href: '/admin/compatible-models', label: 'Models', icon: 'categories' },
             ]

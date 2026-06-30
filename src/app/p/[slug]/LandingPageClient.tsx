@@ -50,16 +50,15 @@ function getProductPrice(p: any): number {
 
   if (hasVariants && hasSelectedVariant) {
     // Customer has chosen a variant — find the exact match and use its price
-    const activeVariant = p.variants.find((v: any) => {
-      const sizeMatch = !v.size || p.selectedVariants?.["Size"] === v.size;
-      const colorMatch =
-        !v.colorName || p.selectedVariants?.["Color"] === v.colorName;
-      const materialMatch =
-        !v.material || p.selectedVariants?.["Material"] === v.material;
-      const ramMatch = !v.ram || p.selectedVariants?.["RAM"] === v.ram;
-      const storageMatch = !v.storage || p.selectedVariants?.["Storage"] === v.storage;
-      return sizeMatch && colorMatch && materialMatch && ramMatch && storageMatch;
-    });
+    const activeVariant =
+        p.variants.length > 0
+          ? p.variants.find((v: any) => {
+              if (v.attributes && Object.keys(v.attributes).length > 0) {
+                 return Object.entries(p.selectedVariants || {}).every(([slug, val]) => v.attributes[slug] === val);
+              }
+              return false;
+            })
+          : null;
     if (activeVariant?.price && activeVariant.price > 0) return activeVariant.price;
   }
 
@@ -85,12 +84,10 @@ function getRequiredVariantTypes(p: any): string[] {
   return [
     ...new Set(
       p.variants.flatMap((v: any) => {
-        const types: string[] = [];
-        if (v.size) types.push("Size");
-        if (v.colorName) types.push("Color");
-        if (v.material) types.push("Material");
-        if (v.model) types.push("Model");
-        return types;
+        if (v.attributes && Object.keys(v.attributes).length > 0) {
+            return Object.keys(v.attributes);
+        }
+        return [];
       }),
     ),
   ] as string[];
@@ -196,7 +193,7 @@ export default function LandingPageClient({
         if (p._id !== productId) return p;
         return {
           ...p,
-          selectedVariants: { ...p.selectedVariants, [type]: value },
+          selectedVariants: { ...p.selectedVariants, [type.toLowerCase()]: value },
         };
       }),
     );

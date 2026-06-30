@@ -1,12 +1,37 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import VariantOption from '@/models/VariantOption';
+import Attribute from '@/models/Attribute';
+import AttributeValue from '@/models/AttributeValue';
 import { requirePermission } from '@/lib/auth';
 
 // GET all variant options (grouped by type)
+// Also returns new dynamic attributes for backward compatibility
 export async function GET() {
     try {
         await dbConnect();
+
+        // Fetch new dynamic attributes
+        const attributes = await Attribute.find({ isActive: true })
+            .sort({ order: 1, createdAt: 1 })
+            .lean();
+
+        const attributeIds = attributes.map((a) => a._id);
+        const attrValues = await AttributeValue.find({
+            attributeId: { $in: attributeIds },
+            isActive: true,
+        })
+            .sort({ order: 1, createdAt: 1 })
+            .lean();
+
+        const dynamicAttributes = attributes.map((attr) => ({
+            ...attr,
+            values: attrValues.filter(
+                (v) => v.attributeId.toString() === attr._id.toString()
+            ),
+        }));
+
+        // Also fetch legacy variant options for backward compat
         const options = await VariantOption.find({ isActive: true })
             .sort({ order: 1, createdAt: 1 })
             .lean();
@@ -19,7 +44,7 @@ export async function GET() {
             storages: options.filter((o) => o.type === 'storage'),
         };
 
-        return NextResponse.json({ success: true, ...grouped });
+        return NextResponse.json({ success: true, ...grouped, attributes: dynamicAttributes });
     } catch (error) {
         console.error('Get Variant Options Error:', error);
         return NextResponse.json(

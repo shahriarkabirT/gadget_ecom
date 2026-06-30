@@ -49,11 +49,7 @@ export default function ExportProducts({ status, search, category }: ExportProdu
                 'Base Price',
                 'Total Stock',
                 'Variant Sku',
-                'Variant Size',
-                'Variant Color',
-                'Variant Material',
-                'Variant RAM',
-                'Variant Storage',
+                'Variant Attributes',
                 'Variant MRP',
                 'Variant Price',
                 'Variant Stock'
@@ -81,11 +77,7 @@ export default function ExportProducts({ status, search, category }: ExportProdu
                         rows.push([
                             ...baseInfo,
                             `"${(v.sku || '').replace(/"/g, '""')}"`,
-                            `"${(v.size || '').replace(/"/g, '""')}"`,
-                            `"${(v.colorName || '').replace(/"/g, '""')}"`,
-                            `"${(v.material || '').replace(/"/g, '""')}"`,
-                            `"${(v.ram || '').replace(/"/g, '""')}"`,
-                            `"${(v.storage || '').replace(/"/g, '""')}"`,
+                            `"${v.attributes ? Object.entries(v.attributes).map(([k, val]) => `${k}:${val}`).join(', ').replace(/"/g, '""') : ''}"`,
                             v.mrp?.toString() || '0',
                             v.price?.toString() || '0',
                             v.stock?.toString() || '0'
@@ -96,10 +88,7 @@ export default function ExportProducts({ status, search, category }: ExportProdu
                     rows.push([
                         ...baseInfo,
                         '', // Variant Sku
-                        '', // Variant Size
-                        '', // Variant Color
-                        '', // Variant Material
-                        '', // Variant Model
+                        '', // Variant Attributes
                         '', // Variant MRP
                         '', // Variant Price
                         ''  // Variant Stock

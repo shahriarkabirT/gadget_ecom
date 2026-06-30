@@ -180,26 +180,51 @@ export default function ProductViewModal({ product, isOpen, onClose }: ProductVi
                                                 <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-200 uppercase tracking-tighter">No Img</div>
                                             )}
                                             <div className="min-w-0">
-                                                <p className="text-xs font-bold text-gray-900 truncate">{[v.size, v.colorName, v.material, v.ram, v.storage].filter(Boolean).join(' / ') || `Variant ${idx + 1}`}</p>
+                                                <p className="text-xs font-bold text-gray-900 truncate">
+                                                    {v.attributes && Object.keys(v.attributes).length > 0
+                                                        ? Object.values(v.attributes).join(' / ')
+                                                        : [v.size, v.colorName, v.material, v.ram, v.storage].filter(Boolean).join(' / ') || `Variant ${idx + 1}`}
+                                                </p>
                                                 <p className="text-[10px] font-semibold text-indigo-600 font-mono tracking-tight truncate">{v.sku || 'NO-SKU'}</p>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px]">
                                             <div className="flex justify-between border-b border-gray-50 pb-1">
-                                                <span className="font-semibold text-gray-500">Size</span>
-                                                <span className="font-bold text-gray-900">{v.size || 'N/A'}</span>
-                                            </div>
-                                            <div className="flex justify-between border-b border-gray-50 pb-1">
                                                 <span className="font-semibold text-gray-500">Stock</span>
                                                 <span className={`font-bold ${v.stock > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{v.stock}</span>
                                             </div>
-                                            <div className="flex justify-between border-b border-gray-50 pb-1">
-                                                <span className="font-semibold text-gray-500">Color</span>
-                                                <div className="flex items-center gap-1.5 min-w-0">
-                                                    <div className="w-2.5 h-2.5 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: v.colorCode || '#ddd' }} />
-                                                    <span className="font-bold text-gray-900 truncate">{v.colorName || 'N/A'}</span>
+                                            
+                                            {/* Dynamic Attributes */}
+                                            {v.attributes && Object.entries(v.attributes).map(([key, val]) => (
+                                                <div key={key} className="flex justify-between border-b border-gray-50 pb-1">
+                                                    <span className="font-semibold text-gray-500 capitalize">{key}</span>
+                                                    {key === 'color' && v.colorCode ? (
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <div className="w-2.5 h-2.5 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: v.colorCode }} />
+                                                            <span className="font-bold text-gray-900 truncate">{String(val)}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="font-bold text-gray-900">{String(val)}</span>
+                                                    )}
                                                 </div>
-                                            </div>
+                                            ))}
+                                            
+                                            {/* Fallback for legacy fields if no attributes present */}
+                                            {(!v.attributes || Object.keys(v.attributes).length === 0) && (
+                                                <>
+                                                    <div className="flex justify-between border-b border-gray-50 pb-1">
+                                                        <span className="font-semibold text-gray-500">Size</span>
+                                                        <span className="font-bold text-gray-900">{v.size || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex justify-between border-b border-gray-50 pb-1">
+                                                        <span className="font-semibold text-gray-500">Color</span>
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <div className="w-2.5 h-2.5 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: v.colorCode || '#ddd' }} />
+                                                            <span className="font-bold text-gray-900 truncate">{v.colorName || 'N/A'}</span>
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
                                             <div className="flex justify-between border-b border-gray-50 pb-1">
                                                 <span className="font-semibold text-gray-500">Price</span>
                                                 <span className="font-bold text-indigo-600">{formatCurrency(v.price)}</span>

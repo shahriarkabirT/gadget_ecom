@@ -106,9 +106,17 @@ const ProductSchema = new Schema<IProductDocument>(
         },
         variants: [
             {
+                // Dynamic attribute system: { "size": "M", "color": "Red", "screen-size": "6.5 inch" }
+                attributes: {
+                    type: Map,
+                    of: String,
+                    default: {},
+                },
+                // Quick-access color code for storefront swatch rendering
+                colorCode: String,
+                // Legacy named fields (kept for backward compatibility with existing products)
                 size: String,
                 colorName: String,
-                colorCode: String,
                 material: String,
                 ram: String,
                 storage: String,
@@ -204,6 +212,8 @@ ProductSchema.index({ isActive: 1 });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ brand: 1 });
 ProductSchema.index({ isFeatured: 1 });
+ProductSchema.set('toJSON', { virtuals: true, flattenMaps: true });
+ProductSchema.set('toObject', { virtuals: true, flattenMaps: true });
 
 const Product: Model<IProductDocument> = mongoose.models.Product || mongoose.model<IProductDocument>('Product', ProductSchema);
 

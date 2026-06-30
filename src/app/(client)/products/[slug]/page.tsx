@@ -55,5 +55,5 @@ export default async function ProductPage({ params }) {
         notFound();
     }
 
-    return <ProductDetailClient product={data.product} globalOptions={data.globalOptions} />;
+    return <ProductDetailClient initialProduct={data.product} serverOptions={data.globalOptions} />;
 }

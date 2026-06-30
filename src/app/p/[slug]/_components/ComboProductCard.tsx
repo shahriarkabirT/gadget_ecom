@@ -3,9 +3,11 @@
 import Image from 'next/image';
 import { Check } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useGetAttributesQuery } from '@/redux/features/attribute/attributeApi';
 
 interface Variant {
     _id?: string;
+    attributes?: Record<string, string>;
     size?: string;
     colorName?: string;
     colorCode?: string;
@@ -35,7 +37,7 @@ interface ComboProductCardProps {
     quantity: number;
     selectedVariants: Record<string, string>;
     onQtyChange: (delta: number) => void;
-    onVariantChange: (type: string, value: string) => void;
+    onVariantChange: (slug: string, value: string) => void;
     /** Single-product landing: no checkbox, qty min 1, variants always visible */
     singleMode?: boolean;
 }
@@ -48,18 +50,22 @@ export default function ComboProductCard({
     onVariantChange,
     singleMode = false,
 }: ComboProductCardProps) {
+    const { data: attributesData } = useGetAttributesQuery();
+    const globalAttributes = attributesData?.attributes || [];
+
     const hasVariants = product.productType === 'variant' && (product.variants?.length ?? 0) > 0;
     const hasOptions = hasVariants || (product.compatibleModels?.length ?? 0) > 0;
 
     // Determine active variant
     const activeVariant = hasVariants
         ? product.variants?.find((v) => {
-              const sizeMatch = !v.size || selectedVariants['Size'] === v.size;
-              const colorMatch = !v.colorName || selectedVariants['Color'] === v.colorName;
-              const materialMatch = !v.material || selectedVariants['Material'] === v.material;
-              const ramMatch = !v.ram || selectedVariants['RAM'] === v.ram;
-              const storageMatch = !v.storage || selectedVariants['Storage'] === v.storage;
-              return sizeMatch && colorMatch && materialMatch && ramMatch && storageMatch;
+              if (v.attributes && Object.keys(v.attributes).length > 0) {
+                  return Object.entries(selectedVariants).every(([slug, val]) => {
+                      if (slug === 'model') return true;
+                      return v.attributes![slug] === val;
+                  });
+              }
+              return false;
           })
         : undefined;
 
@@ -68,36 +74,15 @@ export default function ComboProductCard({
         (activeVariant?.images?.[0] ?? product.images?.[0]) || '/placeholder.png';
     const isSelected = singleMode || quantity > 0;
 
-    // Build unique option sets from variants
-    const getSizes = () =>
-        hasVariants
-            ? [...new Set(product.variants?.map((v) => v.size).filter(Boolean) as string[])]
-            : [];
-    const getColors = () =>
-        hasVariants
-            ? [...new Set(product.variants?.map((v) => v.colorName).filter(Boolean) as string[])]
-            : [];
-    const getMaterials = () =>
-        hasVariants
-            ? [...new Set(product.variants?.map((v) => v.material).filter(Boolean) as string[])]
-            : [];
-    const getRams = () =>
-        hasVariants
-            ? [...new Set(product.variants?.map((v) => v.ram).filter(Boolean) as string[])]
-            : [];
-    const getStorages = () =>
-        hasVariants
-            ? [...new Set(product.variants?.map((v) => v.storage).filter(Boolean) as string[])]
-            : [];
-
-    const sizes = getSizes();
-    const colors = getColors();
-    const materials = getMaterials();
-    const rams = getRams();
-    const storages = getStorages();
-
-    const getColorCode = (colorName: string) =>
-        product.variants?.find((v) => v.colorName === colorName)?.colorCode;
+    // Build required dynamic options
+    const requiredOptions = hasVariants
+        ? [...new Set<string>(product.variants!.flatMap((v) => {
+            if (v.attributes && Object.keys(v.attributes).length > 0) {
+                return Object.keys(v.attributes);
+            }
+            return [];
+        }))]
+        : [];
 
     return (
         <div
@@ -136,7 +121,7 @@ export default function ComboProductCard({
                         )}
                     </div>
 
-                    {/* Price (Hidden on small mobile if it gets too crowded) */}
+                    {/* Price */}
                     <div className="hidden sm:block text-right px-4 shrink-0">
                         <span className="font-bold text-gray-900">{formatCurrency(displayPrice)}</span>
                     </div>
@@ -165,132 +150,92 @@ export default function ComboProductCard({
 
             {hasOptions && isSelected && (
                 <div className="px-12 md:px-16 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                    {/* Color Swatches */}
-                    {colors.length > 0 && (
-                        <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">Color:</span>
-                            <div className="flex flex-wrap gap-2">
-                                {colors.map((color) => {
-                                    const hex = getColorCode(color);
-                                    const active = selectedVariants['Color'] === color;
-                                    return (
-                                        <button
-                                            key={color}
-                                            type="button"
-                                            onClick={() => onVariantChange('Color', color)}
-                                            style={{ backgroundColor: hex || color }}
-                                            className={`w-6 h-6 rounded-full border-2 relative ${
-                                                active ? 'border-red-600 scale-110 shadow-sm' : 'border-white shadow-inner'
-                                            }`}
-                                            title={color}
-                                        >
-                                            {active && <Check className="w-3 h-3 text-white absolute inset-0 m-auto" />}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
+                    {/* Dynamic Variant Attributes */}
+                    {requiredOptions.map((slug) => {
+                        const rawOptions = [...new Set(product.variants!.map((v) => {
+                            if (v.attributes && v.attributes[slug]) return v.attributes[slug];
+                            const fieldMap: Record<string, string> = { 'size': 'size', 'color': 'colorName', 'material': 'material', 'ram': 'ram', 'storage': 'storage' };
+                            const vf = fieldMap[slug] || slug;
+                            return (v as any)[vf];
+                        }).filter(Boolean))] as string[];
 
-                    {sizes.length > 0 && (
-                        <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">Size:</span>
-                            <div className="flex flex-wrap gap-2">
-                                {sizes.map((size) => (
-                                    <button
-                                        key={size}
-                                        type="button"
-                                        onClick={() => onVariantChange('Size', size)}
-                                        className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
-                                            selectedVariants['Size'] === size
-                                                ? 'bg-gray-900 border-gray-900 text-white shadow-md'
-                                                : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                                        }`}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                        if (rawOptions.length === 0) return null;
 
-                    {materials.length > 0 && (
-                        <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">Material:</span>
-                            <div className="flex flex-wrap gap-2">
-                                {materials.map((material) => (
-                                    <button
-                                        key={material}
-                                        type="button"
-                                        onClick={() => onVariantChange('Material', material)}
-                                        className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
-                                            selectedVariants['Material'] === material
-                                                ? 'bg-gray-900 border-gray-900 text-white shadow-md'
-                                                : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                                        }`}
-                                    >
-                                        {material}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                        const globalAttr = globalAttributes.find((a: any) => a.slug === slug);
+                        const attrName = globalAttr?.name || slug.charAt(0).toUpperCase() + slug.slice(1);
+                        const isColor = globalAttr?.type === 'color' || slug === 'color';
 
-                    {rams.length > 0 && (
-                        <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">RAM:</span>
-                            <div className="flex flex-wrap gap-2">
-                                {rams.map((ram) => (
-                                    <button
-                                        key={ram}
-                                        type="button"
-                                        onClick={() => onVariantChange('RAM', ram)}
-                                        className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
-                                            selectedVariants['RAM'] === ram
-                                                ? 'bg-gray-900 border-gray-900 text-white shadow-md'
-                                                : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                                        }`}
-                                    >
-                                        {ram}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                        const options = [...rawOptions].sort((a: any, b: any) => {
+                            const orderA = globalAttr?.values?.find((v: any) => v.label === a)?.order ?? 999;
+                            const orderB = globalAttr?.values?.find((v: any) => v.label === b)?.order ?? 999;
+                            return orderA - orderB;
+                        });
 
-                    {storages.length > 0 && (
-                        <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[50px]">Storage:</span>
-                            <div className="flex flex-wrap gap-2">
-                                {storages.map((storage) => (
-                                    <button
-                                        key={storage}
-                                        type="button"
-                                        onClick={() => onVariantChange('Storage', storage)}
-                                        className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
-                                            selectedVariants['Storage'] === storage
-                                                ? 'bg-gray-900 border-gray-900 text-white shadow-md'
-                                                : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                                        }`}
-                                    >
-                                        {storage}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                        return (
+                            <div key={slug} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                                <span className="text-[10px] font-black uppercase text-gray-400 min-w-[60px]">{attrName}:</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {options.map((opt) => {
+                                        let colorHex: string | undefined = undefined;
+                                        if (isColor) {
+                                            const globalVal = globalAttr?.values?.find((v: any) => v.label === opt);
+                                            if (globalVal?.colorCode) {
+                                                colorHex = globalVal.colorCode;
+                                            } else {
+                                                const matchingVariant = product.variants!.find((v: any) => 
+                                                    v.attributes && v.attributes[slug] === opt
+                                                );
+                                                colorHex = matchingVariant?.colorCode;
+                                            }
+                                        }
 
+                                        const active = selectedVariants[slug] === opt;
+
+                                        return isColor ? (
+                                            <button
+                                                key={opt}
+                                                type="button"
+                                                onClick={() => onVariantChange(slug, opt)}
+                                                style={{ backgroundColor: colorHex || opt }}
+                                                className={`w-6 h-6 rounded-full border-2 relative ${
+                                                    active ? 'border-red-600 scale-110 shadow-sm' : 'border-white shadow-inner'
+                                                }`}
+                                                title={opt}
+                                            >
+                                                {active && <Check className="w-3 h-3 text-white absolute inset-0 m-auto" />}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                key={opt}
+                                                type="button"
+                                                onClick={() => onVariantChange(slug, opt)}
+                                                className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
+                                                    active
+                                                        ? 'bg-gray-900 border-gray-900 text-white shadow-md'
+                                                        : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                                                }`}
+                                            >
+                                                {opt}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Compatible Models (Usually separate from variants) */}
                     {(product.compatibleModels?.length ?? 0) > 0 && (
-                        <div className="flex items-start gap-3 flex-col mt-2">
-                            <span className="text-[10px] font-black uppercase text-gray-400">Select Model:</span>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-2">
+                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[60px]">Model:</span>
                             <div className="flex flex-wrap gap-2">
                                 {product.compatibleModels!.map((model) => (
                                     <button
                                         key={model}
                                         type="button"
-                                        onClick={() => onVariantChange('Model', model)}
+                                        onClick={() => onVariantChange('model', model)}
                                         className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
-                                            selectedVariants['Model'] === model
+                                            selectedVariants['model'] === model
                                                 ? 'bg-gray-900 border-gray-900 text-white shadow-md'
                                                 : 'border-gray-200 text-gray-600 hover:border-gray-400'
                                         }`}

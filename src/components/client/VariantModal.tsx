@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { IProduct } from '@/types';
 import { useCart } from '@/context/CartContext';
-import { useGetVariantOptionsQuery } from '@/redux/features/variantOption/variantOptionApi';
+import { useGetAttributesQuery } from '@/redux/features/attribute/attributeApi';
 import { useRouter } from 'next/navigation';
 import { formatCurrency, calculateDiscountedPrice, isSameVariant } from '@/lib/utils';
 
@@ -13,24 +13,15 @@ interface VariantModalProps {
     product: any;
     isOpen: boolean;
     onClose: () => void;
-    globalOptions?: any;
+    globalOptions?: any; // Leaving this for backwards compat if passed
 }
 
-export default function VariantModal({ product, isOpen, onClose, globalOptions: parentOptions }: VariantModalProps) {
+export default function VariantModal({ product, isOpen, onClose }: VariantModalProps) {
     const { addToCart, isInCart, items } = useCart();
     const router = useRouter();
 
-    const { data: reduxOptions, isLoading } = useGetVariantOptionsQuery(undefined, {
-        skip: !!parentOptions || !isOpen
-    });
-
-    const globalOptions = parentOptions || (reduxOptions ? {
-        sizes: reduxOptions.sizes || [],
-        colors: reduxOptions.colors || [],
-        materials: reduxOptions.materials || [],
-        rams: reduxOptions.rams || [],
-        storages: reduxOptions.storages || []
-    } : undefined);
+    const { data: attributesData } = useGetAttributesQuery(undefined, { skip: !isOpen });
+    const globalAttributes = attributesData?.attributes || [];
 
     const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
     const [mainImage, setMainImage] = useState(product.images?.[0] || '');
@@ -44,32 +35,27 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
     const productDiscountType = product.discountType || 'percentage';
 
     const activeVariant = useMemo(() => {
-        return product.variants?.find(v => {
-            const sizeMatch = !v.size || (selectedVariants as any)['Size'] === v.size;
-            const colorMatch = !v.colorName || (selectedVariants as any)['Color'] === v.colorName;
-            const materialMatch = !v.material || (selectedVariants as any)['Material'] === v.material;
-            const ramMatch = !v.ram || (selectedVariants as any)['RAM'] === v.ram;
-            const storageMatch = !v.storage || (selectedVariants as any)['Storage'] === v.storage;
-            return sizeMatch && colorMatch && materialMatch && ramMatch && storageMatch;
+        return product.variants?.find((v: any) => {
+            if (v.attributes && Object.keys(v.attributes).length > 0) {
+                return Object.entries(selectedVariants).every(([slug, val]) => v.attributes[slug] === val);
+            }
+            return false;
         });
     }, [product.variants, selectedVariants]);
 
     const requiredOptions = useMemo(() => {
         if (!product.variants?.length) return [];
         return [
-            ...new Set(product.variants.flatMap(v => {
-                const types = [];
-                if (v.size) types.push('Size');
-                if (v.colorName) types.push('Color');
-                if (v.material) types.push('Material');
-                if (v.ram) types.push('RAM');
-                if (v.storage) types.push('Storage');
-                return types;
+            ...new Set(product.variants.flatMap((v: any) => {
+                if (v.attributes && Object.keys(v.attributes).length > 0) {
+                    return Object.keys(v.attributes);
+                }
+                return [];
             }))
         ];
     }, [product.variants]);
 
-    const missingSelection = (requiredOptions as string[]).find(type => !(selectedVariants as any)[type]);
+    const missingSelection = (requiredOptions as string[]).find(slug => !selectedVariants[slug]);
     const isSelectionComplete = !missingSelection;
 
     const currentMrp = useMemo(() => activeVariant?.mrp || productMrp, [activeVariant, productMrp]);
@@ -88,32 +74,29 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
     const currentStock = activeVariant ? (activeVariant.stock || 0) : product.stock;
 
     // Calculate how many are already in cart
-    const currentCartItem = items.find(item => item.productId === product._id && isSameVariant(item.variant, selectedVariants));
+    const currentCartItem = items.find(item => item.productId === product._id && isSameVariant(item.variant, { attributes: selectedVariants }));
     const cartItemQuantity = currentCartItem ? currentCartItem.quantity : 0;
     const availableToBuy = (product.preorder && currentStock <= 0) ? 99 : Math.max(0, currentStock - cartItemQuantity);
 
     if (!isOpen) return null;
 
-    const handleVariantChange = (type: string, value: string) => {
+    const handleVariantChange = (slug: string, value: string) => {
         if (selectionError) setSelectionError(null);
         setQuantity(1); // Reset quantity on variant change
-        const fieldMap: Record<string, string> = {
-            'Size': 'size',
-            'Color': 'colorName',
-            'Material': 'material',
-            'RAM': 'ram',
-            'Storage': 'storage'
-        };
-        const field = fieldMap[type] || type.toLowerCase();
-
+        
         // 1. Try to maintain other current selections with the new value
-        const nextSelections = { ...selectedVariants, [type]: value };
+        const nextSelections = { ...selectedVariants, [slug]: value };
 
         // 2. Check if this specific combination exists
         const exactMatch = product.variants?.find((v: any) => {
-            return Object.entries(nextSelections).every(([key, val]) => {
-                const f = fieldMap[key] || key.toLowerCase();
-                return v[f] === val;
+            if (v.attributes && Object.keys(v.attributes).length > 0) {
+                return Object.entries(nextSelections).every(([k, val]) => v.attributes[k] === val);
+            }
+            // Fallback for legacy
+            const fieldMap: Record<string, string> = { 'size': 'size', 'color': 'colorName', 'material': 'material', 'ram': 'ram', 'storage': 'storage' };
+            return Object.entries(nextSelections).every(([k, val]) => {
+                const vf = fieldMap[k] || k;
+                return v[vf] === val;
             });
         });
 
@@ -127,17 +110,24 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
         } else {
             // 3. Smart Switch: Combination doesn't exist, so switch to a valid variant 
             // that HAS the option the user just clicked.
-            const bestFit = product.variants?.find((v: any) => v[field] === value);
+            const bestFit = product.variants?.find((v: any) => {
+                if (v.attributes && v.attributes[slug] === value) return true;
+                const fieldMap: Record<string, string> = { 'size': 'size', 'color': 'colorName', 'material': 'material', 'ram': 'ram', 'storage': 'storage' };
+                const vf = fieldMap[slug] || slug;
+                return v[vf] === value;
+            });
 
             if (bestFit) {
                 const smartSelections: Record<string, string> = { ...selectedVariants };
-                ['Size', 'Color', 'Material', 'RAM', 'Storage'].forEach(key => {
-                    const keyField = fieldMap[key] || key.toLowerCase();
-                    if (bestFit[keyField]) {
-                        smartSelections[key] = bestFit[keyField];
+                (requiredOptions as string[]).forEach((k) => {
+                    if (bestFit.attributes && bestFit.attributes[k]) smartSelections[k] = bestFit.attributes[k];
+                    else {
+                        const fieldMap: Record<string, string> = { 'size': 'size', 'color': 'colorName', 'material': 'material', 'ram': 'ram', 'storage': 'storage' };
+                        const kf = fieldMap[k] || k;
+                        if (bestFit[kf]) smartSelections[k] = bestFit[kf];
                     }
                 });
-                smartSelections[type] = value;
+                smartSelections[slug] = value;
                 setSelectedVariants(smartSelections);
                 if (bestFit.images && bestFit.images.length > 0) {
                     setMainImage(bestFit.images[0]);
@@ -156,14 +146,9 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
             return;
         }
 
-        const variantToSync = { ...selectedVariants };
-        // Sync colorCode if active variant has it
-        if (activeVariant?.colorCode) {
-            (variantToSync as any).colorCode = activeVariant.colorCode;
-        }
-        if (activeVariant?.tax !== undefined) {
-            (variantToSync as any).tax = activeVariant.tax;
-        }
+        const variantToSync: any = { ...selectedVariants };
+        if (activeVariant?.colorCode) variantToSync.colorCode = activeVariant.colorCode;
+        if (activeVariant?.tax !== undefined) variantToSync.tax = activeVariant.tax;
 
         addToCart({
             ...product,
@@ -189,14 +174,9 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
             return;
         }
 
-        const variantToSync = { ...selectedVariants };
-        // Sync colorCode if active variant has it
-        if (activeVariant?.colorCode) {
-            (variantToSync as any).colorCode = activeVariant.colorCode;
-        }
-        if (activeVariant?.tax !== undefined) {
-            (variantToSync as any).tax = activeVariant.tax;
-        }
+        const variantToSync: any = { ...selectedVariants };
+        if (activeVariant?.colorCode) variantToSync.colorCode = activeVariant.colorCode;
+        if (activeVariant?.tax !== undefined) variantToSync.tax = activeVariant.tax;
 
         const directBuyItem = {
             productId: (product as any)._id || (product as any).productId || '',
@@ -273,64 +253,66 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
                     {/* Main Content Area (Variants) */}
                     <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-white">
                         <div className="space-y-6">
-                            {['Size', 'Color', 'Material', 'RAM', 'Storage'].map((variantType) => {
-                                const fieldMap: Record<string, string> = {
-                                    'Size': 'size',
-                                    'Color': 'colorName',
-                                    'Material': 'material',
-                                    'RAM': 'ram',
-                                    'Storage': 'storage'
-                                };
-                                const field = fieldMap[variantType] || variantType.toLowerCase();
-                                const rawOptions = Array.from(new Set(product.variants?.map((v: any) => v[field]).filter(Boolean))) as string[];
+                            {(requiredOptions as string[]).map((slug) => {
+                                const rawOptions = Array.from(new Set(product.variants?.map((v: any) => {
+                                    if (v.attributes && v.attributes[slug]) return v.attributes[slug];
+                                    const fieldMap: Record<string, string> = { 'size': 'size', 'color': 'colorName', 'material': 'material', 'ram': 'ram', 'storage': 'storage' };
+                                    const vf = fieldMap[slug] || slug;
+                                    return v[vf];
+                                }).filter(Boolean))) as string[];
+
+                                const globalAttr = globalAttributes.find((a: any) => a.slug === slug);
+                                const attrName = globalAttr?.name || slug.charAt(0).toUpperCase() + slug.slice(1);
+                                const isColor = globalAttr?.type === 'color' || slug === 'color';
 
                                 const options = [...rawOptions].sort((a: any, b: any) => {
-                                    if (!globalOptions) return 0;
-                                    const globalList = variantType === 'Size' ? globalOptions.sizes
-                                        : variantType === 'Color' ? globalOptions.colors
-                                            : variantType === 'RAM' ? globalOptions.rams
-                                                : variantType === 'Storage' ? globalOptions.storages
-                                                    : globalOptions.materials;
-                                    if (!globalList) return 0;
-                                    const orderA = globalList.find((o: any) => o.label === a)?.order ?? 999;
-                                    const orderB = globalList.find((o: any) => o.label === b)?.order ?? 999;
+                                    const orderA = globalAttr?.values?.find((v: any) => v.label === a)?.order ?? 999;
+                                    const orderB = globalAttr?.values?.find((v: any) => v.label === b)?.order ?? 999;
                                     return orderA - orderB;
                                 });
 
                                 if (options.length === 0) return null;
 
                                 return (
-                                    <div key={variantType}>
+                                    <div key={slug}>
                                         <div className="flex items-center justify-between mb-3">
-                                            <h3 className="text-[13px] font-semibold text-gray-900">{variantType}</h3>
-                                            {selectedVariants[variantType] && (
-                                                <span className="text-[12px] font-medium text-gray-500">{selectedVariants[variantType]}</span>
+                                            <h3 className="text-[13px] font-semibold text-gray-900">{attrName}</h3>
+                                            {selectedVariants[slug] && (
+                                                <span className="text-[12px] font-medium text-gray-500">{selectedVariants[slug]}</span>
                                             )}
                                         </div>
                                         <div className="flex flex-wrap gap-2.5">
                                             {options.map((opt: string) => {
-                                                const isColor = variantType === 'Color';
-                                                const matchingVariant = isColor ? product.variants?.find((v: any) => v.colorName === opt) : null;
-                                                const colorHex = isColor ? (matchingVariant?.colorCode || opt) : null;
+                                                let colorHex: string | undefined = undefined;
+                                                if (isColor) {
+                                                    const globalVal = globalAttr?.values?.find((v: any) => v.label === opt);
+                                                    if (globalVal?.colorCode) {
+                                                        colorHex = globalVal.colorCode;
+                                                    } else {
+                                                        const matchingVariant = product.variants?.find((v: any) => 
+                                                            v.attributes && v.attributes[slug] === opt
+                                                        );
+                                                        colorHex = matchingVariant?.colorCode || opt;
+                                                    }
+                                                }
 
                                                 const isAvailable = product.variants?.some((v: any) => {
-                                                    if (v[field] !== opt) return false;
+                                                    if (!v.attributes || v.attributes[slug] !== opt) return false;
+
                                                     return Object.entries(selectedVariants).every(([key, value]) => {
-                                                        if (key === variantType) return true;
-                                                        const availFieldMap: Record<string, string> = { 'Size': 'size', 'Color': 'colorName', 'Material': 'material', 'RAM': 'ram', 'Storage': 'storage' };
-                                                        const otherField = availFieldMap[key] || key.toLowerCase();
-                                                        return v[otherField] === value;
+                                                        if (key === slug) return true;
+                                                        return v.attributes && v.attributes[key] === value;
                                                     });
                                                 });
 
                                                 return (
                                                     <button
                                                         key={opt}
-                                                        onClick={() => handleVariantChange(variantType, opt)}
+                                                        onClick={() => handleVariantChange(slug, opt)}
                                                         className={`relative transition-all duration-200 focus:outline-none ${isColor
                                                             ? 'w-9 h-9 rounded-full ring-offset-2'
                                                             : 'px-4 py-2 rounded-md text-[13px] font-medium border'
-                                                            } ${selectedVariants[variantType] === opt
+                                                            } ${selectedVariants[slug] === opt
                                                                 ? isColor ? 'ring-2 ring-gray-900' : 'bg-gray-900 border-gray-900 text-white'
                                                                 : !isAvailable
                                                                     ? isColor ? 'opacity-30 grayscale cursor-not-allowed' : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
@@ -340,14 +322,14 @@ export default function VariantModal({ product, isOpen, onClose, globalOptions: 
                                                         title={`${opt}${!isAvailable ? ' (Unavailable with current selection)' : ''}`}
                                                     >
                                                         {!isColor && opt}
-                                                        {isColor && selectedVariants[variantType] === opt && (
+                                                        {isColor && selectedVariants[slug] === opt && (
                                                             <div className={`absolute inset-0 flex items-center justify-center ${opt.toLowerCase() === 'white' ? 'text-black' : 'text-white'}`}>
                                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4 shadow-sm">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                                                 </svg>
                                                             </div>
                                                         )}
-                                                        {isColor && !isAvailable && selectedVariants[variantType] !== opt && (
+                                                        {isColor && !isAvailable && selectedVariants[slug] !== opt && (
                                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                                 <div className="w-full h-[1.5px] bg-gray-400/60 -rotate-45" />
                                                             </div>
