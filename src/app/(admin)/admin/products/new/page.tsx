@@ -3,6 +3,7 @@
 import ImageUpload from '@/components/shared/ImageUpload';
 import VariantManager from '@/components/admin/VariantManager';
 import CategoryHierarchySelector from '@/components/shared/CategoryHierarchySelector';
+import CompatibleModelSelector from '@/components/admin/CompatibleModelSelector';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -798,68 +799,11 @@ export default function NewProductPage() {
 
                             <div>
                                 <label className="block text-[11px] font-semibold uppercase tracking-widest text-gray-900 mb-2">Compatible Models <span className="font-normal normal-case text-gray-400">(opt.)</span></label>
-                                <div className="flex gap-2 mb-3">
-                                    <input
-                                        type="text"
-                                        value={modelInput}
-                                        onChange={(e) => setModelInput(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                if (modelInput.trim()) {
-                                                    const newModels = modelInput.split(',').map(m => m.trim()).filter(Boolean);
-                                                    setFormData(p => ({
-                                                        ...p,
-                                                        compatibleModels: Array.from(new Set([...(p.compatibleModels as string[]), ...newModels]))
-                                                    }));
-                                                    setModelInput('');
-                                                }
-                                            }
-                                        }}
-                                        className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm font-medium text-gray-900 focus:border-gray-900 transition-all placeholder:text-gray-400 outline-none"
-                                        placeholder="iPhone 15 Pro, Galaxy S24 Ultra..."
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (modelInput.trim()) {
-                                                const newModels = modelInput.split(',').map(m => m.trim()).filter(Boolean);
-                                                setFormData(p => ({
-                                                    ...p,
-                                                    compatibleModels: Array.from(new Set([...(p.compatibleModels as string[]), ...newModels]))
-                                                }));
-                                                setModelInput('');
-                                            }
-                                        }}
-                                        className="px-4 py-3 bg-gray-900 text-white rounded-lg text-sm font-bold flex items-center justify-center hover:bg-black transition-all"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                        </svg>
-                                    </button>
-                                </div>
-                                {(formData.compatibleModels as string[])?.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {(formData.compatibleModels as string[]).map((model, idx) => (
-                                            <div key={idx} className="flex items-center gap-1.5 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-xs font-semibold">
-                                                <span>{model}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setFormData(p => ({
-                                                        ...p,
-                                                        compatibleModels: (p.compatibleModels as string[]).filter((_, i) => i !== idx)
-                                                    }))}
-                                                    className="p-0.5 hover:bg-gray-200 rounded-full text-gray-500 hover:text-rose-500 transition-colors"
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                <p className="text-[10px] text-gray-600 mt-2 font-medium tracking-tight">Press Enter or + to add a model</p>
+                                <CompatibleModelSelector 
+                                    selectedModels={formData.compatibleModels as string[]}
+                                    onChange={(models) => setFormData(p => ({ ...p, compatibleModels: models as never[] }))}
+                                />
+                                <p className="text-[10px] text-gray-600 mt-2 font-medium tracking-tight">Select compatible models or add new ones</p>
                             </div>
                         </div>
                     </div>

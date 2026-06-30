@@ -125,6 +125,17 @@ export interface IBrand {
 
 export interface IBrandDocument extends Omit<IBrand, '_id'>, Document { }
 
+export interface ICompatibleModel {
+    _id: string;
+    name: string;
+    slug: string;
+    order: number;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface ICompatibleModelDocument extends Omit<ICompatibleModel, '_id'>, Document { }
 export interface ISubCategory {
     _id: string;
     name: string;
