@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const brandName = settings?.brandName || 'Store';
 
     return {
-        metadataBase: new URL('https://sundus.bd'),
+        metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
         alternates: {
             canonical: '/',
         },

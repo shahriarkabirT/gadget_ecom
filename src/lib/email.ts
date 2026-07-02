@@ -1,7 +1,7 @@
-import nodemailer from 'nodemailer';
+import dbConnect from '@/lib/db';
 import env from '@/lib/env';
 import Settings from '@/models/Settings';
-import dbConnect from '@/lib/db';
+import nodemailer from 'nodemailer';
 
 const getEmailConfig = async () => {
     await dbConnect();
@@ -45,6 +45,7 @@ const getEmailConfig = async () => {
 export const sendOTPEmail = async (email: string, otp: string) => {
     const { transporter, from, settings, isConfigured } = await getEmailConfig();
     const brandName = settings?.brandName || 'Store';
+    const contactEmail = settings?.contactEmail || 'info@ccloudlab.com';
 
     // If no SMTP credentials, log to console for development
     if (!isConfigured || !transporter) {
@@ -58,9 +59,9 @@ export const sendOTPEmail = async (email: string, otp: string) => {
     const mailOptions = {
         from: from as string,
         to: email,
-        replyTo: 'info.sundus.bd@gmail.com',
+        replyTo: contactEmail,
         subject: `Verification Code for Your ${brandName} Account`,
-        text: `Your verification code is: ${otp}. It will expire in 10 minutes. If you have any questions, please contact us at info.sundus.bd@gmail.com`,
+        text: `Your verification code is: ${otp}. It will expire in 10 minutes. If you have any questions, please contact us at ${contactEmail}`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 10px;">
                 <h2 style="color: #2563eb; text-align: center;">Verification Code</h2>
@@ -69,7 +70,7 @@ export const sendOTPEmail = async (email: string, otp: string) => {
                 <div style="background-color: #f3f4f6; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
                     <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1f2937;">${otp}</span>
                 </div>
-                <p style="color: #6b7280; font-size: 14px; text-align: center;">If you have any questions, please contact us at <a href="mailto:info.sundus.bd@gmail.com" style="color: #2563eb; text-decoration: none;">info.sundus.bd@gmail.com</a></p>
+                <p style="color: #6b7280; font-size: 14px; text-align: center;">If you have any questions, please contact us at <a href="mailto:${contactEmail}" style="color: #2563eb; text-decoration: none;">${contactEmail}</a></p>
                 <hr style="border: 0; border-top: 1px solid #e1e1e1; margin: 20px 0;" />
                 <p style="font-size: 12px; color: #6b7280; text-align: center;">&copy; ${new Date().getFullYear()} ${brandName}. All rights reserved.</p>
             </div>
@@ -89,6 +90,7 @@ export const sendOTPEmail = async (email: string, otp: string) => {
 export const sendPasswordResetEmail = async (email: string, otp: string) => {
     const { transporter, from, settings, isConfigured } = await getEmailConfig();
     const brandName = settings?.brandName || 'Store';
+    const contactEmail = settings?.contactEmail || 'info@ccloudlab.com';
 
     // If no SMTP credentials, log to console for development
     if (!isConfigured || !transporter) {
@@ -102,9 +104,9 @@ export const sendPasswordResetEmail = async (email: string, otp: string) => {
     const mailOptions = {
         from: from as string,
         to: email,
-        replyTo: 'info.sundus.bd@gmail.com',
+        replyTo: contactEmail,
         subject: `Password Reset Request - ${brandName}`,
-        text: `You requested to reset your password. Your verification code is: ${otp}. It will expire in 10 minutes. If you have any questions, please contact us at info.sundus.bd@gmail.com`,
+        text: `You requested to reset your password. Your verification code is: ${otp}. It will expire in 10 minutes. If you have any questions, please contact us at ${contactEmail}`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 10px;">
                 <h2 style="color: #2563eb; text-align: center;">Password Reset Request</h2>
@@ -114,7 +116,7 @@ export const sendPasswordResetEmail = async (email: string, otp: string) => {
                     <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1f2937;">${otp}</span>
                 </div>
                 <p style="color: #6b7280; font-size: 14px; text-align: center;">If you did not request a password reset, please ignore this email.</p>
-                <p style="color: #6b7280; font-size: 14px; text-align: center;">If you have any questions, please contact us at <a href="mailto:info.sundus.bd@gmail.com" style="color: #2563eb; text-decoration: none;">info.sundus.bd@gmail.com</a></p>
+                <p style="color: #6b7280; font-size: 14px; text-align: center;">If you have any questions, please contact us at <a href="mailto:${contactEmail}" style="color: #2563eb; text-decoration: none;">${contactEmail}</a></p>
                 <hr style="border: 0; border-top: 1px solid #e1e1e1; margin: 20px 0;" />
                 <p style="font-size: 12px; color: #6b7280; text-align: center;">&copy; ${new Date().getFullYear()} ${brandName}. All rights reserved.</p>
             </div>
@@ -201,6 +203,7 @@ export const sendMarketingEmail = async (email: string, subject: string, message
 export const sendOrderConfirmationEmail = async (order: any) => {
     const { transporter, from, settings, isConfigured } = await getEmailConfig();
     const brandName = settings?.brandName || 'Store';
+    const contactEmail = settings?.contactEmail || 'info@ccloudlab.com';
     const email = order.customerInfo.email;
 
     if (!email) return { success: false, message: 'No email provided' };
@@ -226,7 +229,7 @@ export const sendOrderConfirmationEmail = async (order: any) => {
     const mailOptions = {
         from: from as string,
         to: email,
-        replyTo: 'info.sundus.bd@gmail.com',
+        replyTo: contactEmail,
         subject: `Order Confirmation - ${order.orderId} - ${brandName}`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
@@ -298,7 +301,7 @@ export const sendOrderConfirmationEmail = async (order: any) => {
                 </div>
 
                 <div style="text-align: center; color: #666; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <p>If you have any questions, please contact us at <a href="mailto:info.sundus.bd@gmail.com" style="color: #2563eb; text-decoration: none;">info.sundus.bd@gmail.com</a></p>
+                    <p>If you have any questions, please contact us at <a href="mailto:${contactEmail}" style="color: #2563eb; text-decoration: none;">${contactEmail}</a></p>
                     <p>&copy; ${new Date().getFullYear()} ${brandName}. All rights reserved.</p>
                 </div>
             </div>

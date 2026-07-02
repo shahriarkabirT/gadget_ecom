@@ -3,28 +3,28 @@
 import { useState } from "react";
 import { useGetPublicSettingsQuery } from '@/redux/features/settings/settingsApi';
 
-const faqs = [
+const getFaqs = (brandName: string, settings?: any) => [
   {
-    q: "What is SUNDUS?",
-    a: "SUNDUS is a modern modest fashion & lifestyle brand offering premium quality fashion and lifestyle products for men, women, and kids. Our collections include Panjabi, Pajama, Abaya, Women's Dress, Kids Collection, Watches, Perfumes, Accessories, and more daily lifestyle essentials.",
+    q: `What is ${brandName}?`,
+    a: `${brandName} is a modern modest fashion & lifestyle brand offering premium quality fashion and lifestyle products for men, women, and kids. Our collections include Panjabi, Pajama, Abaya, Women's Dress, Kids Collection, Watches, Perfumes, Accessories, and more daily lifestyle essentials.`,
   },
   {
-    q: "What products are available at SUNDUS?",
+    q: `What products are available at ${brandName}?`,
     a: null,
     list: ["Men's Fashion", "Women's Fashion", "Kids Collection", "Watches", "Perfumes", "Fashion Accessories", "Lifestyle Essentials"],
     suffix: "We are continuously expanding our collections with new and trendy products.",
   },
   {
-    q: "Is SUNDUS only a fashion brand?",
-    a: "No. SUNDUS is not only a fashion brand — it is a complete lifestyle brand. Alongside fashion collections, we aim to introduce daily life essentials, premium accessories, and modern lifestyle products for individuals and families.",
+    q: `Is ${brandName} only a fashion brand?`,
+    a: `No. ${brandName} is not only a fashion brand — it is a complete lifestyle brand. Alongside fashion collections, we aim to introduce daily life essentials, premium accessories, and modern lifestyle products for individuals and families.`,
   },
   {
-    q: "Does SUNDUS offer premium quality products?",
+    q: `Does ${brandName} offer premium quality products?`,
     a: "Yes. Quality is one of our top priorities. Every product is selected carefully to ensure elegance, comfort, durability, and customer satisfaction.",
   },
   {
     q: "Do you offer products for both men and women?",
-    a: "Yes. SUNDUS offers fashion and lifestyle products for:",
+    a: `Yes. ${brandName} offers fashion and lifestyle products for:`,
     list: ["Men", "Women", "Kids"],
     suffix: "Our goal is to provide stylish collections for the entire family.",
   },
@@ -33,35 +33,41 @@ const faqs = [
     a: "Absolutely. We continuously update our collections with modern fashion trends, premium lifestyle items, watches, perfumes, accessories, and other daily essentials.",
   },
   {
-    q: "Can I order online from SUNDUS?",
+    q: `Can I order online from ${brandName}?`,
     a: "Yes. Customers can easily place orders online through our website and social media platforms.",
   },
   {
-    q: "Does SUNDUS provide home delivery?",
+    q: `Does ${brandName} provide home delivery?`,
     a: "Yes. We provide delivery services to ensure customers receive their products safely and conveniently.",
   },
   {
-    q: "Who is the founder of SUNDUS?",
-    a: "SUNDUS was founded by MD Foyshal Ahmed, Founder & CEO. His vision is to build SUNDUS into a trusted international modest fashion & lifestyle brand.",
+    q: `Who is the founder of ${brandName}?`,
+    a: `${brandName} was founded by MD Foyshal Ahmed, Founder & CEO. His vision is to build ${brandName} into a trusted international modest fashion & lifestyle brand.`,
   },
   {
-    q: "What is the mission of SUNDUS?",
+    q: `What is the mission of ${brandName}?`,
     a: "Our mission is to provide premium quality fashion and lifestyle products that combine elegance, comfort, modesty, and modern trends.",
   },
   {
-    q: "What is the vision of SUNDUS?",
-    a: "Our vision is to make SUNDUS a globally recognized fashion and lifestyle brand representing luxury, trust, and elegance.",
+    q: `What is the vision of ${brandName}?`,
+    a: `Our vision is to make ${brandName} a globally recognized fashion and lifestyle brand representing luxury, trust, and elegance.`,
   },
   {
-    q: "How can I contact SUNDUS?",
+    q: `How can I contact ${brandName}?`,
     a: "You can reach us through any of these channels:",
-    list: ["Website", "Facebook Page", "Instagram", "WhatsApp", "Customer Support Number"],
+    list: [
+      "Website",
+      settings?.facebook ? <a href={settings.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-white underline transition-colors">Facebook Page</a> : "Facebook Page",
+      settings?.instagram ? <a href={settings.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-white underline transition-colors">Instagram</a> : "Instagram",
+      "WhatsApp",
+      "Customer Support Number"
+    ],
     suffix: "Our support team is always ready to help you.",
   },
 ];
 
 function FaqItem({ item, index, open, onToggle }: {
-  item: typeof faqs[0];
+  item: { q: string, a: string | null, list?: React.ReactNode[], suffix?: string };
   index: number;
   open: boolean;
   onToggle: () => void;
@@ -99,8 +105,8 @@ function FaqItem({ item, index, open, onToggle }: {
           )}
           {item.list && (
             <ul className="space-y-1.5 mb-3">
-              {item.list.map((li) => (
-                <li key={li} className="flex items-center gap-2.5 text-[14px] text-white/60">
+              {item.list.map((li, idx) => (
+                <li key={idx} className="flex items-center gap-2.5 text-[14px] text-white/60">
                   <span className="w-1 h-1 rounded-full bg-white/30 flex-shrink-0" />
                   {li}
                 </li>
@@ -116,10 +122,11 @@ function FaqItem({ item, index, open, onToggle }: {
   );
 }
 
-export default function FaqClient() {
+export default function FaqClient({ brandName = 'Ccloud' }: { brandName?: string }) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const { data: settingsData } = useGetPublicSettingsQuery();
   const settings = settingsData?.settings;
+  const faqs = getFaqs(brandName, settings);
 
   return (
     <main className="bg-white min-h-screen font-sans antialiased text-black">
@@ -134,7 +141,7 @@ export default function FaqClient() {
           <span className="italic font-light text-black/40">Questions</span>
         </h1>
         <p className="text-[15px] text-black/45 max-w-md mx-auto leading-relaxed">
-          Everything you need to know about SUNDUS. Can&apos;t find an answer? Reach out to our support team.
+          Everything you need to know about {brandName}. Can&apos;t find an answer? Reach out to our support team.
         </p>
       </section>
 
@@ -192,7 +199,7 @@ export default function FaqClient() {
 
       {/* ── FOOTER ── */}
       <footer className="bg-white border-t border-black/8 py-10 px-6 text-center">
-        <p className="font-serif text-2xl font-light text-black tracking-widest mb-2">SUNDUS</p>
+        <p className="font-serif text-2xl font-light text-black tracking-widest mb-2">{brandName}</p>
         <p className="text-xs tracking-[0.15em] uppercase text-black/30">
           Modern Modest Fashion &amp; Lifestyle — Bangladesh
         </p>

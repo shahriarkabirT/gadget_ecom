@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         console.error('Sitemap DB connection error:', error);
     }
 
-    const baseUrl = 'https://sundus.bd';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
     let productUrls: MetadataRoute.Sitemap = [];
     let blogUrls: MetadataRoute.Sitemap = [];

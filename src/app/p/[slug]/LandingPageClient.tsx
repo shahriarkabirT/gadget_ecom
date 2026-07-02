@@ -1269,12 +1269,12 @@ export default function LandingPageClient({
                 <div className="flex items-center gap-3 text-xs font-bold text-red-300/70">
                   <span>Powered by</span>
                   <a
-                    href="https://sundus.bd"
+                    href={process.env.NEXT_PUBLIC_BASE_URL || "/"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-black text-red-300 hover:text-red-200 transition-colors"
                   >
-                    sundus.bd
+                    {process.env.NEXT_PUBLIC_BASE_URL?.replace(/^https?:\/\//, '') || "Store"}
                   </a>
               
                 </div>
