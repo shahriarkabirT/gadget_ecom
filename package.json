@@ -83,5 +83,12 @@
     "Opera >= 80",
     "not dead",
     "not IE 11"
-  ]
+  ],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "core-js",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
 }

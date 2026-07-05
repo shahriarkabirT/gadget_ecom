@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
         let actualPrice = 0;
         let itemTax = 0;
-        let itemTaxType = 'percentage';
+        let itemTaxType: 'flat' | 'percentage' = 'percentage';
         let title = product.title;
         let matchedVariantForCost: any = null;
 
