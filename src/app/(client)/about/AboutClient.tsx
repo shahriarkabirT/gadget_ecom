@@ -42,7 +42,7 @@ function Divider({ dark = false }: { dark?: boolean }) {
   );
 }
 
-export default function AboutClient() {
+export default function AboutClient({ brandName = 'CCloudLab' }: { brandName?: string }) {
   return (
     <main className="bg-white min-h-screen text-black font-sans antialiased">
 
@@ -60,7 +60,7 @@ export default function AboutClient() {
           <SectionTag>Our Story</SectionTag>
 
           <h1 className="font-serif mt-5 mb-3 font-light leading-[1.0] tracking-[-0.02em] text-[clamp(64px,10vw,108px)] text-black">
-            SUNDUS
+            {brandName}
           </h1>
 
           <p className="font-serif italic font-light text-black/40 text-[clamp(17px,2.5vw,22px)] mb-8 leading-relaxed">
@@ -70,7 +70,7 @@ export default function AboutClient() {
           <Divider />
 
           <p className="text-[15px] leading-[1.9] text-black/50 max-w-xl mx-auto">
-            Welcome to SUNDUS — built with passion, elegance, and trust.
+            Welcome to {brandName} — built with passion, elegance, and trust.
             Where premium fashion meets Islamic grace, and every product tells a story of confidence.
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function AboutClient() {
               <div className="absolute inset-[-16px] rounded-full border border-dashed border-white/8 pointer-events-none" />
               <Image 
                 src="/images/about_logo.png" 
-                alt="SUNDUS Logo" 
+                alt={`${brandName} Logo`} 
                 width={200} 
                 height={200} 
                 className="w-auto h-auto max-w-[180px] object-contain"
@@ -102,10 +102,10 @@ export default function AboutClient() {
               A Dream Woven Into Every Thread
             </h2>
             <p className="text-[15px] leading-[1.85] text-white/55 mb-5">
-              SUNDUS was founded with a dream — to bring premium fashion, Islamic elegance, and modern lifestyle together in one place. Our goal is not only to sell products, but to create a brand that reflects confidence, modesty, beauty, and quality for every generation.
+              {brandName} was founded with a dream — to bring premium fashion, Islamic elegance, and modern lifestyle together in one place. Our goal is not only to sell products, but to create a brand that reflects confidence, modesty, beauty, and quality for every generation.
             </p>
             <p className="text-[15px] leading-[1.85] text-white/55">
-              At SUNDUS, every product is carefully selected and designed to match today&apos;s fashion trends while maintaining elegance and comfort — because fashion is not just appearance. It is a reflection of personality, values, and lifestyle.
+              At {brandName}, every product is carefully selected and designed to match today&apos;s fashion trends while maintaining elegance and comfort — because fashion is not just appearance. It is a reflection of personality, values, and lifestyle.
             </p>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function AboutClient() {
                 A Global Name from Bangladesh
               </h3>
               <p className="text-[15px] leading-[1.85] text-white/50">
-                To make SUNDUS a trusted international brand representing luxury, modest fashion, and lifestyle excellence — carrying the pride of Bangladesh to the world.
+                To make {brandName} a trusted international brand representing luxury, modest fashion, and lifestyle excellence — carrying the pride of Bangladesh to the world.
               </p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function AboutClient() {
           <div className="text-center mb-16">
             <SectionTag>Leadership</SectionTag>
             <h2 className="font-serif text-4xl font-normal mt-4 text-black">
-              The Visionary Behind SUNDUS
+              The Visionary Behind {brandName}
             </h2>
           </div>
 
@@ -221,13 +221,13 @@ export default function AboutClient() {
                 MD Foyshal Ahmed
               </h3>
               <p className="text-xs tracking-[0.15em] uppercase text-black/35 mb-7">
-                SUNDUS — Bangladesh
+                {brandName} — Bangladesh
               </p>
               <blockquote className="font-serif text-xl italic font-light text-black/50 leading-relaxed border-l-2 border-black pl-5 mb-7">
                 &quot;Building a brand that represents elegance, trust, and modern lifestyle.&quot;
               </blockquote>
               <p className="text-sm leading-[1.85] text-black/50">
-                With a strong vision and dedication, MD Foyshal Ahmed established SUNDUS to create a trusted fashion destination for people who appreciate premium quality and elegant lifestyle products. His mission is to build SUNDUS into a globally recognized modest fashion and lifestyle brand from Bangladesh.
+                With a strong vision and dedication, MD Foyshal Ahmed established {brandName} to create a trusted fashion destination for people who appreciate premium quality and elegant lifestyle products. His mission is to build {brandName} into a globally recognized modest fashion and lifestyle brand from Bangladesh.
               </p>
             </div>
           </div>
@@ -257,10 +257,10 @@ export default function AboutClient() {
           </h2>
           <Divider />
           <p className="text-[15px] leading-[1.9] text-black/50 mb-6">
-            As our journey continues, SUNDUS aims to introduce more modern fashion trends, lifestyle products, and daily essential items that meet the needs of individuals and families alike. Alongside Men&apos;s Fashion, Women&apos;s Fashion, and Kids Collection, we are expanding with premium watches, luxury perfumes, fashion accessories, and many more everyday essentials.
+            As our journey continues, {brandName} aims to introduce more modern fashion trends, lifestyle products, and daily essential items that meet the needs of individuals and families alike. Alongside Men&apos;s Fashion, Women&apos;s Fashion, and Kids Collection, we are expanding with premium watches, luxury perfumes, fashion accessories, and many more everyday essentials.
           </p>
-          <p className="text-[15px] leading-[1.9] text-black/50">
-            We are committed to bringing innovation, elegance, and trust into every collection we launch — making SUNDUS not just a fashion brand, but a complete lifestyle destination you can trust.
+          <p className="text-[15px] leading-[1.9] text-black/60 text-center max-w-3xl mx-auto">
+            We are committed to bringing innovation, elegance, and trust into every collection we launch — making {brandName} not just a fashion brand, but a complete lifestyle destination you can trust.
           </p>
         </div>
       </section>
@@ -269,7 +269,7 @@ export default function AboutClient() {
       <section className="bg-black py-24 px-6 text-center">
         <SectionTag dark>Join the Journey</SectionTag>
         <h2 className="font-serif text-4xl font-normal mt-4 mb-3 text-white">
-          Explore SUNDUS Today
+          Explore {brandName} Today
         </h2>
         <p className="text-[15px] text-white/45 mb-10">
           Discover our latest collections and become part of our growing family.
@@ -292,7 +292,7 @@ export default function AboutClient() {
 
       {/* ── FOOTER ── */}
       <footer className="bg-white border-t border-black/8 py-10 px-6 text-center">
-        <p className="font-serif text-2xl font-light text-black tracking-widest mb-2">SUNDUS</p>
+        <p className="font-serif text-2xl font-light text-black tracking-widest mb-2">{brandName}</p>
         <p className="text-xs tracking-[0.15em] uppercase text-black/30">
           Modern Modest Fashion &amp; Lifestyle — Bangladesh
         </p>

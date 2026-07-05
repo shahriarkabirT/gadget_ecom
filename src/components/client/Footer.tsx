@@ -117,7 +117,7 @@ export default function Footer() {
                                 )}
                             </Link>
                             <p className="text-[14px] text-gray-500 leading-4.5 mt-1">
-                                Sundus is an e-commerce platform dedicated to providing safe and reliable products to every home.
+                                {brandName} is an e-commerce platform dedicated to providing safe and reliable products to every home.
                             </p>
                         </div>
 

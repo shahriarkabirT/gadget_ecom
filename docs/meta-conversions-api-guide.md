@@ -1,7 +1,7 @@
 # Meta Conversions API & Catalog Guide for Marketers
 *Target Audience: Marketing Team, Growth Hackers, and Ads Specialists*
 
-Welcome to the **sundus.bd** Meta tracking architecture guide. This document details how our state-of-the-art tracking system is implemented, how it optimizes your ad spend, and how you can manage and verify it within **Meta Events Manager**.
+Welcome to the **ccloudlab.com** Meta tracking architecture guide. This document details how our state-of-the-art tracking system is implemented, how it optimizes your ad spend, and how you can manage and verify it within **Meta Events Manager**.
 
 ---
 
@@ -60,7 +60,7 @@ To power **Dynamic Product Ads (DPA)** and retarget users with the exact product
 
 * **Pixel tracked ID**: Sends the MongoDB ObjectID `_id` (e.g., `69f78cb1f5c096a3f7b8a642`).
 * **Live Catalog Feed**: We have created a dynamic XML feed at:
-  👉 **`https://sundus.bd/api/products/facebook-feed?file=.xml`**
+  👉 **`https://{domain_name}/api/products/facebook-feed?file=.xml`**
 * **The Match**: This feed exports all active catalog items from the database with `<g:id>` mapped to the MongoDB `_id`, guaranteeing a **100% catalog match rate** and enabling dynamic retargeting without warnings.
 
 ---
@@ -71,7 +71,7 @@ Here is how you can verify and monitor this setup inside your Meta Business Acco
 
 ### A. How to check Event Match Quality
 1. Go to **Meta Events Manager**.
-2. Select your Pixel **SUNDUSBD**.
+2. Select your Pixel **{Brand Name}**.
 3. Under the **Overview** tab, look at the **Purchase** event.
 4. Verify the **Event Match Quality Score**. It should be rated **Good** or **Excellent** because we are sending advanced matching customer parameters (email, phone, ip, name, city).
 
@@ -92,7 +92,7 @@ To test the server-side integration without placing a real order:
 ## 📋 6. Summary Checklist for Your Next Campaign Launch
 
 - [ ] **Catalog Source**: Ensure your catalog data source is set to a **Scheduled Feed** pointing to:
-  `https://sundus.bd/api/products/facebook-feed?file=.xml`
-- [ ] **Pixel Setup**: Verify the client Pixel is active on `sundus.bd`.
+  `https://{domain_name}/api/products/facebook-feed?file=.xml`
+- [ ] **Pixel Setup**: Verify the client Pixel is active on `{domain_name}`.
 - [ ] **Conversions API**: Confirm server-side Purchase tracking is active (triggered automatically upon any successful landing page order or standard checkout).
 - [ ] **ROAS Tracking**: Verify that currency is reported correctly as **BDT** and purchase values exclude/include shipping fees according to your reporting preference.
