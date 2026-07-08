@@ -73,8 +73,8 @@ function CheckoutContent() {
         phone: "",
         email: "",
         address: "",
-        division: "",
-        district: "",
+        // division: "",
+        // district: "",
         city: "",
         notes: "",
     });
@@ -280,12 +280,12 @@ function CheckoutContent() {
         const { name, value } = e.target;
         setFormData((prev) => {
             const updated = { ...prev, [name]: value };
-            if (name === "division") {
-                updated.district = "";
-                updated.city = "";
-            } else if (name === "district") {
-                updated.city = value;
-            }
+            // if (name === "division") {
+            //     updated.district = "";
+            //     updated.city = "";
+            // } else if (name === "district") {
+            //     updated.city = value;
+            // }
             return updated;
         });
         if (errors[name]) {
@@ -331,9 +331,10 @@ function CheckoutContent() {
             name: address.name || user?.name || prev.name,
             phone: address.phone || user?.phone || prev.phone,
             address: address.address,
-            division: matchedDivision,
-            district: matchedDistrict,
-            city: matchedDistrict || address.city,
+            // division: matchedDivision,
+            // district: matchedDistrict,
+            // city: matchedDistrict || address.city,
+            city: address.city,
         }));
         setShowAddressModal(false);
         toast.success("Address applied!");
@@ -357,13 +358,13 @@ function CheckoutContent() {
             newErrors.address = "Address is required";
         }
 
-        if (!formData.division) {
-            newErrors.division = "Division is required";
-        }
+        // if (!formData.division) {
+        //     newErrors.division = "Division is required";
+        // }
 
-        if (!formData.district) {
-            newErrors.district = "District is required";
-        }
+        // if (!formData.district) {
+        //     newErrors.district = "District is required";
+        // }
 
         if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = "Invalid email format";
@@ -392,8 +393,10 @@ function CheckoutContent() {
                 body: JSON.stringify({
                     customerInfo: {
                         ...formData,
-                        address: `${formData.address}, ${formData.district}, ${formData.division}`,
-                        city: formData.district,
+                        // address: `${formData.address}, ${formData.district}, ${formData.division}`,
+                        // city: formData.district,
+                        address: formData.address,
+                        city: formData.city || undefined,
                         deliveryLocation,
                     },
                     items: items.map((item) => ({
@@ -635,7 +638,7 @@ function CheckoutContent() {
                                             <p className="text-sm text-danger mt-1">{errors.email}</p>
                                         )}
                                     </div>
-                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                      {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Division *
@@ -677,7 +680,7 @@ function CheckoutContent() {
                                                 <p className="text-sm text-danger mt-1">{errors.district}</p>
                                             )}
                                         </div>
-                                    </div>
+                                    </div> */}
 
                                     {/* Delivery Area Selector */}
                                     <div>
@@ -954,17 +957,17 @@ function CheckoutContent() {
                                                                     return (
                                                                         <span
                                                                             key={key}
-                                                                            className="flex items-center gap-1 text-[9px] bg-gray-50 px-1 py-0.5 rounded text-gray-400 font-bold uppercase tracking-tighter border border-gray-100"
+                                                                            className="flex items-center gap-1.5 text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-bold uppercase tracking-tight border border-gray-200"
                                                                         >
                                                                             {swatchColor && (
                                                                                 <span
-                                                                                    className="w-1.5 h-1.5 rounded-full border border-gray-200"
+                                                                                    className="w-2 h-2 rounded-full border border-gray-300 shadow-sm"
                                                                                     style={{
                                                                                         backgroundColor: swatchColor,
                                                                                     }}
                                                                                 />
                                                                             )}
-                                                                            {key}: {String(value)}
+                                                                            {String(value)}
                                                                         </span>
                                                                     );
                                                                 },

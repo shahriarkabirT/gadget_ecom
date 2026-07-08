@@ -32,22 +32,22 @@ export default function ComboBillingForm({
         name: '',
         phone: '',
         address: '',
-        division: '',
-        district: '',
+        // division: '',
+        // district: '',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         const updatedData = { ...formData, [name]: value };
 
-        if (name === 'division') {
-            updatedData.district = '';
-            if (onDistrictChange) onDistrictChange('');
-        }
+        // if (name === 'division') {
+        //     updatedData.district = '';
+        //     if (onDistrictChange) onDistrictChange('');
+        // }
 
-        if (name === 'district') {
-            if (onDistrictChange) onDistrictChange(value);
-        }
+        // if (name === 'district') {
+        //     if (onDistrictChange) onDistrictChange(value);
+        // }
 
         setFormData(updatedData);
     };
@@ -100,7 +100,7 @@ export default function ComboBillingForm({
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-[10px] font-black uppercase text-gray-400 mb-2 ml-1">
                                     Division <span className="text-red-500">*</span>
@@ -136,7 +136,7 @@ export default function ComboBillingForm({
                                     ))}
                                 </select>
                             </div>
-                        </div>
+                        </div> */}
 
                         <div>
                             <label className="block text-[10px] font-black uppercase text-gray-400 mb-2 ml-1">

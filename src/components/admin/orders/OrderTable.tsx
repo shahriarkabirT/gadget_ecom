@@ -60,16 +60,30 @@ export default function OrderTable({
                                         className="hover:bg-gray-50 transition-colors bg-white cursor-pointer group"
                                     >
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors font-mono">
-                                                    #{order.orderId}
-                                                </span>
-                                                <OrderSourceBadge source={order.source} />
-                                                {order.isPreorder && (
-                                                    <span className="bg-orange-100 text-orange-600 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter border border-orange-200">
-                                                        Pre-order
-                                                    </span>
+                                            <div className="flex items-center gap-3">
+                                                {order.products?.[0]?.image && (
+                                                    <img 
+                                                        src={order.products[0].image} 
+                                                        alt="Product" 
+                                                        className="w-10 h-10 object-cover rounded-lg border border-gray-100 shrink-0" 
+                                                    />
                                                 )}
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors font-mono">
+                                                            #{order.orderId}
+                                                        </span>
+                                                        <OrderSourceBadge source={order.source} />
+                                                        {order.isPreorder && (
+                                                            <span className="bg-orange-100 text-orange-600 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter border border-orange-200">
+                                                                Pre-order
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {order.products?.length > 1 && (
+                                                        <span className="text-[10px] text-gray-500 font-medium">+{order.products.length - 1} more items</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -182,16 +196,30 @@ export default function OrderTable({
                             className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4 cursor-pointer hover:border-gray-300 transition-all group"
                         >
                             <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors font-mono">
-                                        #{order.orderId}
-                                    </span>
-                                    <OrderSourceBadge source={order.source} />
-                                    {order.isPreorder && (
-                                        <span className="bg-orange-100 text-orange-600 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter border border-orange-200">
-                                            Pre-order
-                                        </span>
+                                <div className="flex items-center gap-3">
+                                    {order.products?.[0]?.image && (
+                                        <img 
+                                            src={order.products[0].image} 
+                                            alt="Product" 
+                                            className="w-10 h-10 object-cover rounded-lg border border-gray-100 shrink-0" 
+                                        />
                                     )}
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors font-mono">
+                                                #{order.orderId}
+                                            </span>
+                                            <OrderSourceBadge source={order.source} />
+                                            {order.isPreorder && (
+                                                <span className="bg-orange-100 text-orange-600 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter border border-orange-200">
+                                                    Pre-order
+                                                </span>
+                                            )}
+                                        </div>
+                                        {order.products?.length > 1 && (
+                                            <span className="text-[10px] text-gray-500 font-medium">+{order.products.length - 1} more items</span>
+                                        )}
+                                    </div>
                                 </div>
                                 <span className="text-[10px] text-gray-400 font-medium">{formatDate(order.createdAt)}</span>
                             </div>

@@ -108,18 +108,9 @@ export default function OrderDetailPage() {
     };
 
     const cleanTitle = (title: string) => {
-        if (!title.includes('(')) return title;
-        const [baseTitle, variantPart] = title.split('(');
-        if (!variantPart) return title;
-        
-        const cleanVariant = variantPart
-            .replace(')', '')
-            .split(',')
-            .map(p => p.trim())
-            .filter(p => !/^#([0-9A-F]{3}){1,2}$/i.test(p) && p !== '0')
-            .join(', ');
-            
-        return cleanVariant ? `${baseTitle.trim()} (${cleanVariant})` : baseTitle.trim();
+        const lastParenIndex = title.lastIndexOf('(');
+        if (lastParenIndex === -1) return title;
+        return title.substring(0, lastParenIndex).trim();
     };
 
     const getStatusStyle = (status: string) => {
@@ -437,6 +428,20 @@ export default function OrderDetailPage() {
                                         <p className="text-xs text-gray-500 mt-1">
                                             {formatPrice(item.price)} × {item.quantity}
                                         </p>
+                                        {item.variant && Object.keys(item.variant).length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                                {Object.entries(item.variant)
+                                                    .filter(([key, val]) => 
+                                                        !['colorCode', 'tax', '_id', 'price', 'stock', 'image', 'sku', 'id'].includes(key) && 
+                                                        !/^#([0-9A-F]{3}){1,2}$/i.test(String(val))
+                                                    )
+                                                    .map(([key, val], idx) => (
+                                                        <span key={idx} className="bg-gray-100 text-gray-700 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter border border-gray-200">
+                                                            {key}: {String(val)}
+                                                        </span>
+                                                    ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm font-medium text-gray-900">{formatPrice(item.price * item.quantity)}</p>
@@ -1038,7 +1043,7 @@ export default function OrderDetailPage() {
                                         />
                                     </div>
                                 </div>
-                                <div>
+                                {/* <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">City/District</label>
                                     <input
                                         type="text"
@@ -1047,7 +1052,7 @@ export default function OrderDetailPage() {
                                         onChange={(e) => setEditCustomerForm(prev => ({ ...prev, city: e.target.value }))}
                                         className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-black"
                                     />
-                                </div>
+                                </div> */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Shipping Address</label>
                                     <textarea

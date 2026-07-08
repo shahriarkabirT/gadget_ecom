@@ -52,9 +52,9 @@ export async function generateMetadata(): Promise<Metadata> {
         },
         title: {
             template: `%s | ${brandName}`,
-            default: `${brandName} - Quality Products at Great Prices`,
+            default: `${brandName} - Girls Phone Covers Bangladesh | Cute Cases for iPhone, Samsung | BDGirls`,
         },
-        description: `${brandName}: Your trusted online shopping destination. Quality products, great prices, and excellent customer service.`,
+        description: `${brandName}: Your trusted online shopping destination. Girls Phone Covers Bangladesh | Cute Cases for iPhone, Samsung | BDGirls`,
         keywords: 'ecommerce, online shopping, products, store',
         authors: [{ name: 'Collaborative Cloud', url: 'https://ccloudlab.com' }],
         creator: 'Collaborative Cloud',

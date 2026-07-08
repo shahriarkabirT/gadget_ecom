@@ -435,6 +435,11 @@ export interface ISettings {
     facebookPixelId?: string;
     googleTagManagerId?: string;
     tiktokPixelId?: string;
+    
+    // Social Auth
+    googleClientId?: string;
+    googleClientSecret?: string;
+    
     createdAt: Date;
     updatedAt: Date;
 }

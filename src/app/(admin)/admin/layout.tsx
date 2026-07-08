@@ -85,9 +85,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             children: [
                 { href: '/admin/settings/general', label: 'General Settings' },
                 { href: '/admin/settings/otp', label: 'OTP Settings' },
-                { href: '/admin/settings/pixel', label: 'Pixel & GTM' },
+                { href: '/admin/settings/pixel', label: 'Pixel Setup' },
                 { href: '/admin/settings/logo', label: 'Logo Settings' },
                 { href: '/admin/settings/contact', label: 'Contact Settings' },
+                { href: '/admin/settings/social-auth', label: 'Social Auth Settings' },
                 { href: '/admin/couriers', label: 'Courier Settings'},
             ]
         },

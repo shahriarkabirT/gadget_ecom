@@ -1,8 +1,13 @@
 import env from '@/lib/env';
 import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/db';
+import Settings from '@/models/Settings';
 
 export async function GET() {
-    const clientId = env.GOOGLE_CLIENT_ID;
+    await dbConnect();
+    const settings = await Settings.findOne({}, 'googleClientId');
+    
+    const clientId = settings?.googleClientId || env.GOOGLE_CLIENT_ID;
     const redirectUri = env.NEXT_PUBLIC_APP_URL ? `${env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback` : 'http://localhost:3000/api/auth/google/callback';
 
     if (!clientId) {

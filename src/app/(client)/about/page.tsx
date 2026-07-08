@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
-import AboutClient from "./AboutClient";
 import dbConnect from "@/lib/db";
 import Settings from "@/models/Settings";
+import type { Metadata } from "next";
+import AboutClient from "./AboutClient";
+
 
 async function getSettings() {
     try {

@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
+import Settings from '@/models/Settings';
 import { signAccessToken, signRefreshToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import env from '@/lib/env';
@@ -17,8 +18,10 @@ export async function GET(request: Request) {
     }
 
     try {
-        const clientId = env.GOOGLE_CLIENT_ID;
-        const clientSecret = env.GOOGLE_CLIENT_SECRET;
+        await dbConnect();
+        const settings = await Settings.findOne({}, 'googleClientId googleClientSecret');
+        const clientId = settings?.googleClientId || env.GOOGLE_CLIENT_ID;
+        const clientSecret = settings?.googleClientSecret || env.GOOGLE_CLIENT_SECRET;
         const redirectUri = `${env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback`;
 
         // 1. Exchange code for tokens

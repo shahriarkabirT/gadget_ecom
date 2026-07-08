@@ -6,6 +6,7 @@ import Coupon from '@/models/Coupon';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { requirePermission } from '@/lib/auth';
 import { snapshotUnitProductCost } from '@/lib/orderUnitCost';
+import { getNextSequence } from '@/models/Counter';
 
 function generatePOSReceiptId(): string {
     const timestamp = Date.now().toString(36).toUpperCase();
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
         let subtotal = 0;
 
         for (const item of items) {
-            const product = await Product.findById(item.productId);
+            const product = await Product.findById(item.productId).lean();
 
             if (!product) {
                 return NextResponse.json(
@@ -80,19 +81,19 @@ export async function POST(request: Request) {
             if (item.variant && Object.keys(item.variant).length > 0) {
                 // Find matching variant
                 const variant = product.variants.find((v: any) => {
+                    if (item.variant._id && v._id && item.variant._id.toString() === v._id.toString()) {
+                        return true;
+                    }
+
                     const itemVar = item.variant.attributes || item.variant;
                     if (v.attributes && Object.keys(v.attributes).length > 0) {
                         return Object.entries(itemVar).every(([slug, val]) => {
-                            if (slug === 'colorCode' || slug === 'tax') return true;
-                            if (slug.toLowerCase() === 'model') return !v.attributes['model'] || v.attributes['model'] === val;
-                            return v.attributes[slug] === val || v.attributes[slug.toLowerCase()] === val;
+                            if (['colorCode', 'tax', '_id', 'id', 'price', 'stock', 'image', 'sku'].includes(slug)) return true;
+                            if (slug.toLowerCase() === 'model') return !v.attributes['model'] || v.attributes['model'] === val || v.attributes['Model'] === val;
+                            return v.attributes[slug] === val || v.attributes[slug.toLowerCase()] === val || v.attributes[slug.charAt(0).toUpperCase() + slug.slice(1)] === val;
                         });
                     }
-                    const sizeMatch = !v.size || itemVar['Size'] === v.size || itemVar['size'] === v.size;
-                    const colorMatch = !v.colorName || itemVar['Color'] === v.colorName || itemVar['color'] === v.colorName || itemVar['colorName'] === v.colorName;
-                    const materialMatch = !v.material || itemVar['Material'] === v.material || itemVar['material'] === v.material;
-                    const modelMatch = !v.model || itemVar['Model'] === v.model || itemVar['model'] === v.model;
-                    return sizeMatch && colorMatch && materialMatch && modelMatch;
+                    return false;
                 });
 
                 if (!variant) {
@@ -231,7 +232,8 @@ export async function POST(request: Request) {
         const totalAmount = Math.max(0, subtotal + totalTax - discountAmount);
         const changeAmount = paymentMethod === 'Cash' ? Math.max(0, amountTendered - totalAmount) : 0;
 
-        const orderId = generatePOSReceiptId();
+        const seq = await getNextSequence('orderId');
+        const orderId = String(seq).padStart(6, '0');
 
         // Build customer info (walk-in default)
         const finalCustomerInfo = {

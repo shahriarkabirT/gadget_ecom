@@ -5,6 +5,7 @@ import LandingPage from '@/models/LandingPage';
 import Product from '@/models/Product';
 import Fraud from '@/models/Fraud';
 import { generateOrderId } from '@/lib/utils';
+import { getNextSequence } from '@/models/Counter';
 import { snapshotUnitProductCost } from '@/lib/orderUnitCost';
 import { validateCheckoutData } from '@/lib/validators';
 import { requirePermission, getUserFromToken } from '@/lib/auth';
@@ -163,11 +164,11 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            let product = await Product.findById(pid);
+            let product = await Product.findById(pid).lean();
             
             if (!product) {
                 console.log(`Product not found by ID. Checking variant ID...`);
-                product = await Product.findOne({ "variants._id": pid });
+                product = await Product.findOne({ "variants._id": pid }).lean();
             }
 
             if (!product) {
@@ -202,19 +203,20 @@ export async function POST(request: NextRequest) {
             if (item.variant && Object.keys(item.variant).length > 0) {
                 // Find matching variant
                 const variant = product.variants.find((v: any) => {
+                    if (item.variant._id && v._id && item.variant._id.toString() === v._id.toString()) {
+                        return true;
+                    }
+
                     const itemVar = item.variant.attributes || item.variant;
                     if (v.attributes && Object.keys(v.attributes).length > 0) {
                         return Object.entries(itemVar).every(([slug, val]) => {
-                            if (slug === 'colorCode' || slug === 'tax') return true;
-                            if (slug.toLowerCase() === 'model') return !v.attributes['model'] || v.attributes['model'] === val;
-                            return v.attributes[slug] === val || v.attributes[slug.toLowerCase()] === val;
+                            if (['colorCode', 'tax', '_id', 'id', 'price', 'stock', 'image', 'sku'].includes(slug)) return true;
+                            if (slug.toLowerCase() === 'model') return !v.attributes['model'] || v.attributes['model'] === val || v.attributes['Model'] === val;
+                            return v.attributes[slug] === val || v.attributes[slug.toLowerCase()] === val || v.attributes[slug.charAt(0).toUpperCase() + slug.slice(1)] === val;
                         });
                     }
-                    const sizeMatch = !v.size || itemVar['Size'] === v.size || itemVar['size'] === v.size;
-                    const colorMatch = !v.colorName || itemVar['Color'] === v.colorName || itemVar['color'] === v.colorName || itemVar['colorName'] === v.colorName;
-                    const materialMatch = !v.material || itemVar['Material'] === v.material || itemVar['material'] === v.material;
-                    const modelMatch = !v.model || itemVar['Model'] === v.model || itemVar['model'] === v.model;
-                    return sizeMatch && colorMatch && materialMatch && modelMatch;
+                    
+                    return false;
                 });
 
                 if (!variant) {
@@ -350,7 +352,8 @@ export async function POST(request: NextRequest) {
         }
 
         const totalAmount = Math.max(0, subtotal + serverShippingCost + taxAmount - serverDiscountAmount);
-        const orderId = generateOrderId();
+        const seq = await getNextSequence('orderId');
+        const orderId = String(seq).padStart(6, '0');
         const user = await getUserFromToken();
 
         const orderCustomerInfo = landingPageId

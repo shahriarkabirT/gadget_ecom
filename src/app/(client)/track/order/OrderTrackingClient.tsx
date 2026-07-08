@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, FormEvent } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Package, Search, Truck, CheckCircle, Clock, XCircle, ArrowRight, MapPin, CreditCard, ShoppingBag, RotateCcw, Ban, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface TrackedProduct {
@@ -231,7 +232,7 @@ export default function OrderTrackingClient() {
                                                 <div className="absolute top-5 left-[10%] right-[10%] h-[2px] bg-gray-100" />
                                                 {/* Active line */}
                                                 <div
-                                                    className="absolute top-5 left-[10%] h-[2px] bg-gray-900 transition-all duration-700"
+                                                    className="absolute top-5 left-[10%] h-[2px] bg-emerald-500 transition-all duration-700"
                                                     style={{
                                                         width: `${(activeStepIndex / (STATUS_FLOW.length - 1)) * 80}%`,
                                                     }}
@@ -248,9 +249,9 @@ export default function OrderTrackingClient() {
                                                             <div
                                                                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
                                                                     isCurrent
-                                                                        ? 'bg-gray-900 ring-4 ring-gray-900/20 scale-110'
+                                                                        ? 'bg-emerald-500 ring-4 ring-emerald-500/20 scale-110'
                                                                         : isCompleted
-                                                                            ? 'bg-gray-900'
+                                                                            ? 'bg-emerald-500'
                                                                             : 'bg-gray-100'
                                                                 }`}
                                                             >
@@ -280,16 +281,16 @@ export default function OrderTrackingClient() {
                                                             <div
                                                                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
                                                                     isCurrent
-                                                                        ? 'bg-gray-900 ring-4 ring-gray-900/20'
+                                                                        ? 'bg-emerald-500 ring-4 ring-emerald-500/20'
                                                                         : isCompleted
-                                                                            ? 'bg-gray-900'
+                                                                            ? 'bg-emerald-500'
                                                                             : 'bg-gray-100'
                                                                 }`}
                                                             >
                                                                 <StepIcon className={`w-3.5 h-3.5 ${isCompleted ? 'text-white' : 'text-gray-400'}`} />
                                                             </div>
                                                             {!isLast && (
-                                                                <div className={`w-[2px] h-8 ${isCompleted && i < activeStepIndex ? 'bg-gray-900' : 'bg-gray-100'}`} />
+                                                                <div className={`w-[2px] h-8 ${isCompleted && i < activeStepIndex ? 'bg-emerald-500' : 'bg-gray-100'}`} />
                                                             )}
                                                         </div>
                                                         <div className={`pt-1 ${!isLast ? 'pb-4' : ''}`}>
@@ -354,9 +355,11 @@ export default function OrderTrackingClient() {
                                             {order.products.map((item, i) => (
                                                 <div key={i} className="flex items-center gap-4 py-2">
                                                     {item.image ? (
-                                                        <img
+                                                        <Image
                                                             src={item.image}
                                                             alt={item.title}
+                                                            width={48}
+                                                            height={48}
                                                             className="w-12 h-12 object-cover rounded-lg border border-gray-100 bg-gray-50"
                                                         />
                                                     ) : (

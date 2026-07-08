@@ -19,6 +19,10 @@ export const settingsApi = apiSlice.injectEndpoints({
             query: () => '/admin/settings/general',
             providesTags: ['Settings'],
         }),
+        getSocialAuthSettings: builder.query<{ success: boolean; settings: ISettings }, void>({
+            query: () => '/admin/settings/social-auth',
+            providesTags: ['Settings'],
+        }),
         updateSettings: builder.mutation<{ success: boolean; settings: ISettings }, Partial<ISettings>>({
             query: (body) => ({
                 url: '/admin/settings/contact',
@@ -51,6 +55,14 @@ export const settingsApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['Settings'],
         }),
+        updateSocialAuthSettings: builder.mutation<{ success: boolean; settings: ISettings }, { googleClientId?: string; googleClientSecret?: string }>({
+            query: (body) => ({
+                url: '/admin/settings/social-auth',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Settings'],
+        }),
         getPublicGeneralSettings: builder.query<{ success: boolean; settings: ISettings }, void>({
             query: () => '/settings/general',
             providesTags: ['Settings'],
@@ -68,4 +80,6 @@ export const {
     useGetGeneralSettingsQuery,
     useUpdateGeneralSettingsMutation,
     useGetPublicGeneralSettingsQuery,
+    useGetSocialAuthSettingsQuery,
+    useUpdateSocialAuthSettingsMutation,
 } = settingsApi;

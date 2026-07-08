@@ -112,7 +112,7 @@ export default function LandingPageClient({
     minutes: 0,
     seconds: 0,
   });
-  const [currentDistrict, setCurrentDistrict] = useState("");
+  // const [currentDistrict, setCurrentDistrict] = useState("");
   const [deliveryLocation, setDeliveryLocation] = useState<"inside" | "outside" | "">("");
   const [activeImage, setActiveImage] = useState<string | null>(null);
 
@@ -284,13 +284,14 @@ export default function LandingPageClient({
     setIsSubmitting(true);
     try {
       if (isCombo) {
-        const fullAddress = `${formData.address}, ${formData.district}, ${formData.division}`;
+        // const fullAddress = `${formData.address}, ${formData.district}, ${formData.division}`;
+        const fullAddress = formData.address;
         const res = await axios.post("/api/orders", {
           customerInfo: {
             name: formData.name,
             phone: formData.phone,
             address: fullAddress,
-            city: formData.district,
+            // city: formData.district,
             deliveryLocation,
             paymentMethod: "COD",
           },
@@ -368,7 +369,8 @@ export default function LandingPageClient({
           customerInfo: {
             name: formData.name,
             phone: formData.phone,
-            address: `${formData.address}, ${formData.district}, ${formData.division}`,
+            // address: `${formData.address}, ${formData.district}, ${formData.division}`,
+            address: formData.address,
             deliveryLocation,
           },
         });

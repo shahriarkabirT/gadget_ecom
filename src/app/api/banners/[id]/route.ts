@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import dbConnect from '@/lib/db';
 import Banner from '@/models/Banner';
 import { requirePermission } from '@/lib/auth';
@@ -45,7 +45,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
         await banner.save();
 
-        revalidatePath('/');
+        revalidateTag('banners', { expire: 0 });
+        revalidatePath('/', 'page');
 
         return NextResponse.json({
             success: true,
@@ -90,7 +91,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
         await Banner.findByIdAndDelete(id);
 
-        revalidatePath('/');
+        revalidateTag('banners', { expire: 0 });
+        revalidatePath('/', 'page');
 
         return NextResponse.json({
             success: true,

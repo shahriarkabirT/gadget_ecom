@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Share2, Copy, Check, X } from 'lucide-react';
 
 interface SocialShareProps {
     url?: string;
@@ -8,7 +9,9 @@ interface SocialShareProps {
 }
 
 export default function SocialShare({ url, title }: SocialShareProps) {
-    const [isMounted, setIsMounted] = React.useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     React.useEffect(() => {
         setIsMounted(true);
@@ -20,7 +23,7 @@ export default function SocialShare({ url, title }: SocialShareProps) {
             <div className="flex items-center gap-4 animate-pulse">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Share:</span>
                 <div className="flex gap-1">
-                    {[1, 2, 3].map((i) => (
+                    {[1, 2, 3, 4].map((i) => (
                         <div key={i} className="w-9 h-9 bg-gray-100 rounded-lg" />
                     ))}
                 </div>
@@ -41,7 +44,8 @@ export default function SocialShare({ url, title }: SocialShareProps) {
                 </svg>
             ),
             link: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-            color: 'text-[#1877F2]'
+            color: 'text-[#1877F2]',
+            isAction: false
         },
         {
             name: 'Twitter',
@@ -51,7 +55,8 @@ export default function SocialShare({ url, title }: SocialShareProps) {
                 </svg>
             ),
             link: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-            color: 'text-[#1DA1F2]'
+            color: 'text-[#1DA1F2]',
+            isAction: false
         },
         {
             name: 'WhatsApp',
@@ -61,40 +66,40 @@ export default function SocialShare({ url, title }: SocialShareProps) {
                 </svg>
             ),
             link: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
-            color: 'text-[#25D366]'
+            color: 'text-[#25D366]',
+            isAction: false
         },
         {
-            name: 'TikTok',
-            icon: (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.43v-7.15a8.16 8.16 0 005.58 2.17v-3.4a4.85 4.85 0 01-2-.56z" fill="#000000"/>
-                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.43v-7.15a8.16 8.16 0 005.58 2.17v-3.4a4.85 4.85 0 01-2-.56z" fill="#25F4EE" style={{ mixBlendMode: 'multiply', transform: 'translate(-1px, -1px)' }} />
-                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.43v-7.15a8.16 8.16 0 005.58 2.17v-3.4a4.85 4.85 0 01-2-.56z" fill="#FE2C55" style={{ mixBlendMode: 'multiply', transform: 'translate(1px, 1px)' }} />
-                </svg>
-            ),
-            link: `https://www.tiktok.com/`,
-            color: 'text-black'
+            name: 'Share',
+            icon: <Share2 className="w-5 h-5" />,
+            link: '#',
+            color: 'text-gray-700',
+            isAction: true
         }
     ];
 
     const handleShare = async (e: React.MouseEvent, social: any) => {
-        if (social.name === 'TikTok' && typeof navigator !== 'undefined' && navigator.share) {
+        if (social.isAction) {
             e.preventDefault();
-            try {
-                await navigator.share({
-                    title: title,
-                    url: currentUrl,
-                });
-            } catch (err) {
-                if ((err as Error).name !== 'AbortError') {
-                    console.error('Error sharing:', err);
-                }
-            }
+            setShowModal(true);
+        }
+    };
+
+    const copyToClipboard = async () => {
+        try {
+            await navigator.clipboard.writeText(currentUrl);
+            setCopied(true);
+            setTimeout(() => {
+                setCopied(false);
+                setShowModal(false);
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy', err);
         }
     };
 
     return (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 relative">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Share:</span>
             <div className="flex gap-1">
                 {shares.map((social) => (
@@ -102,8 +107,8 @@ export default function SocialShare({ url, title }: SocialShareProps) {
                         key={social.name}
                         href={social.link}
                         onClick={(e) => handleShare(e, social)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target={social.isAction ? undefined : "_blank"}
+                        rel={social.isAction ? undefined : "noopener noreferrer"}
                         className={`p-2 bg-white border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors ${social.color}`}
                         title={social.name}
                     >
@@ -111,6 +116,35 @@ export default function SocialShare({ url, title }: SocialShareProps) {
                     </a>
                 ))}
             </div>
+
+            {/* Share Modal */}
+            {showModal && (
+                <>
+                    <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setShowModal(false)} />
+                    <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-72 origin-top-left animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-3">
+                            <h4 className="font-bold text-gray-900">Share Link</h4>
+                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 border border-gray-100">
+                            <input 
+                                type="text" 
+                                value={currentUrl} 
+                                readOnly 
+                                className="bg-transparent text-sm text-gray-600 flex-1 outline-none min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
+                            />
+                            <button 
+                                onClick={copyToClipboard}
+                                className="p-2 bg-white rounded-md shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors shrink-0"
+                            >
+                                {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600" />}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

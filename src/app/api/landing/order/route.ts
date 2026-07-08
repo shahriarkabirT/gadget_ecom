@@ -7,6 +7,7 @@ import Settings from '@/models/Settings';
 import Fraud from '@/models/Fraud';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { generateOrderId } from '@/lib/utils';
+import { getNextSequence } from '@/models/Counter';
 import { snapshotUnitProductCost } from '@/lib/orderUnitCost';
 import { sendCapiPurchase } from '@/lib/meta-capi';
 
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify product
-        const product = await Product.findById(productId);
+        const product = await Product.findById(productId).lean();
         if (!product || !product.isActive) {
             return NextResponse.json(
                 { success: false, message: 'Product not found or unavailable' },
@@ -68,19 +69,19 @@ export async function POST(request: NextRequest) {
         if (variant && Object.keys(variant).length > 0) {
             // Find matching variant
             const matchedVariant = product.variants.find((v: any) => {
+                if (variant._id && v._id && variant._id.toString() === v._id.toString()) {
+                    return true;
+                }
+
                 const itemVar = variant.attributes || variant;
                 if (v.attributes && Object.keys(v.attributes).length > 0) {
                     return Object.entries(itemVar).every(([slug, val]) => {
-                        if (slug === 'colorCode' || slug === 'tax') return true;
-                        if (slug.toLowerCase() === 'model') return !v.attributes['model'] || v.attributes['model'] === val;
-                        return v.attributes[slug] === val || v.attributes[slug.toLowerCase()] === val;
+                        if (['colorCode', 'tax', '_id', 'id', 'price', 'stock', 'image', 'sku'].includes(slug)) return true;
+                        if (slug.toLowerCase() === 'model') return !v.attributes['model'] || v.attributes['model'] === val || v.attributes['Model'] === val;
+                        return v.attributes[slug] === val || v.attributes[slug.toLowerCase()] === val || v.attributes[slug.charAt(0).toUpperCase() + slug.slice(1)] === val;
                     });
                 }
-                const sizeMatch = !v.size || itemVar['Size'] === v.size || itemVar['size'] === v.size;
-                const colorMatch = !v.colorName || itemVar['Color'] === v.colorName || itemVar['color'] === v.colorName || itemVar['colorName'] === v.colorName;
-                const materialMatch = !v.material || itemVar['Material'] === v.material || itemVar['material'] === v.material;
-                const modelMatch = !v.model || itemVar['Model'] === v.model || itemVar['model'] === v.model;
-                return sizeMatch && colorMatch && materialMatch && modelMatch;
+                return false;
             });
 
             if (!matchedVariant) {
@@ -180,7 +181,8 @@ export async function POST(request: NextRequest) {
         const shippingCost = landingFreeShipping || product.freeShipping ? 0 : baseShippingCost;
 
         const totalAmount = Math.max(0, subtotal + totalTax + shippingCost);
-        const orderId = generateOrderId();
+        const seq = await getNextSequence('orderId');
+        const orderId = String(seq).padStart(6, '0');
 
         const order = await Order.create({
             orderId,

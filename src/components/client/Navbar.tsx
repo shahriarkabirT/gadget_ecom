@@ -450,6 +450,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
                   <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-t border-l border-gray-100/50 rotate-45 z-[-1]" />
 
                   {[
+                    { label: "Track Order", href: "/track/order", icon: PackageSearch },
                     { label: "About Us", href: "/about", icon: Info },
                     { label: "Wishlist", href: "/wishlist", icon: Heart },
                     { label: "FAQ", href: "/faq", icon: HelpCircle },

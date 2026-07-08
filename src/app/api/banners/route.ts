@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import dbConnect from '@/lib/db';
 import Banner from '@/models/Banner';
 import { requirePermission } from '@/lib/auth';
@@ -97,7 +97,8 @@ export async function POST(request: NextRequest) {
             order: order || 0,
         });
 
-        revalidatePath('/');
+        revalidateTag('banners', { expire: 0 });
+        revalidatePath('/', 'page');
 
         return NextResponse.json({
             success: true,

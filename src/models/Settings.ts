@@ -97,6 +97,14 @@ const SettingsSchema = new Schema<ISettingsDocument>(
             type: String,
             trim: true,
         },
+        googleClientId: {
+            type: String,
+            trim: true,
+        },
+        googleClientSecret: {
+            type: String,
+            trim: true,
+        },
         brandName: {
             type: String,
             trim: true,
