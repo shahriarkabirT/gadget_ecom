@@ -337,6 +337,20 @@ export async function DELETE(request, { params }) {
             ...(product.images || []),
             ...(product.variants || []).flatMap((v: any) => v.images || []),
         ];
+        if (product.sizeGuide) {
+            let sizeGuideUrl = product.sizeGuide;
+            if (typeof product.sizeGuide === 'object' && (product.sizeGuide as any).image) {
+                sizeGuideUrl = (product.sizeGuide as any).image;
+            } else if (typeof product.sizeGuide === 'string') {
+                try {
+                    const parsed = JSON.parse(product.sizeGuide);
+                    if (parsed && parsed.image) sizeGuideUrl = parsed.image;
+                } catch (e) {
+                    // It's just a regular string URL, keep sizeGuideUrl as is
+                }
+            }
+            allImages.push(sizeGuideUrl);
+        }
         await deleteImages(allImages);
 
         const productSlug = product.slug;

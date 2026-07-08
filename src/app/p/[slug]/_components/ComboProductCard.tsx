@@ -60,6 +60,8 @@ export default function ComboProductCard({
     const activeVariant = hasVariants
         ? product.variants?.find((v) => {
               if (v.attributes && Object.keys(v.attributes).length > 0) {
+                  if (Object.keys(selectedVariants).length === 0) return false;
+
                   return Object.entries(selectedVariants).every(([slug, val]) => {
                       if (slug === 'model') return true;
                       return v.attributes![slug] === val;
@@ -172,12 +174,12 @@ export default function ComboProductCard({
                         });
 
                         return (
-                            <div key={slug} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                            <div key={slug} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-3 first:mt-0">
                                 <span className="text-[10px] font-black uppercase text-gray-400 min-w-[60px]">{attrName}:</span>
-                                <div className="flex flex-wrap gap-2">
-                                    {options.map((opt) => {
-                                        let colorHex: string | undefined = undefined;
-                                        if (isColor) {
+                                {isColor ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {options.map((opt) => {
+                                            let colorHex: string | undefined = undefined;
                                             const globalVal = globalAttr?.values?.find((v: any) => v.label === opt);
                                             if (globalVal?.colorCode) {
                                                 colorHex = globalVal.colorCode;
@@ -187,63 +189,49 @@ export default function ComboProductCard({
                                                 );
                                                 colorHex = matchingVariant?.colorCode;
                                             }
-                                        }
 
-                                        const active = selectedVariants[slug] === opt;
+                                            const active = selectedVariants[slug] === opt;
 
-                                        return isColor ? (
-                                            <button
-                                                key={opt}
-                                                type="button"
-                                                onClick={() => onVariantChange(slug, opt)}
-                                                style={{ backgroundColor: colorHex || opt }}
-                                                className={`w-6 h-6 rounded-full border-2 relative ${
-                                                    active ? 'border-red-600 scale-110 shadow-sm' : 'border-white shadow-inner'
-                                                }`}
-                                                title={opt}
-                                            >
-                                                {active && <Check className="w-3 h-3 text-white absolute inset-0 m-auto" />}
-                                            </button>
-                                        ) : (
-                                            <button
-                                                key={opt}
-                                                type="button"
-                                                onClick={() => onVariantChange(slug, opt)}
-                                                className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
-                                                    active
-                                                        ? 'bg-gray-900 border-gray-900 text-white shadow-md'
-                                                        : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                                                }`}
-                                            >
-                                                {opt}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                            return (
+                                                <button
+                                                    key={opt}
+                                                    type="button"
+                                                    onClick={() => onVariantChange(slug, opt)}
+                                                    style={{ backgroundColor: colorHex || opt }}
+                                                    className={`w-6 h-6 rounded-full border-2 relative ${
+                                                        active ? 'border-red-600 scale-110 shadow-sm' : 'border-white shadow-inner'
+                                                    }`}
+                                                    title={opt}
+                                                >
+                                                    {active && <Check className="w-3 h-3 text-white absolute inset-0 m-auto" />}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="flex-1 w-full sm:max-w-xs">
+                                        <select
+                                            value={selectedVariants[slug] || ""}
+                                            onChange={(e) => onVariantChange(slug, e.target.value)}
+                                            className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-900 appearance-none bg-no-repeat bg-right hover:border-gray-300 transition-colors"
+                                            style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")', backgroundSize: '1rem', backgroundPosition: 'right 0.5rem center' }}
+                                        >
+                                            <option value="" disabled>Choose an option</option>
+                                            {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
 
                     {/* Compatible Models (Usually separate from variants) */}
                     {(product.compatibleModels?.length ?? 0) > 0 && (
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-2">
-                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[60px]">Model:</span>
-                            <div className="flex flex-wrap gap-2">
-                                {product.compatibleModels!.map((model) => (
-                                    <button
-                                        key={model}
-                                        type="button"
-                                        onClick={() => onVariantChange('model', model)}
-                                        className={`px-3 py-1 rounded-full border text-[10px] font-black transition-all ${
-                                            selectedVariants['model'] === model
-                                                ? 'bg-gray-900 border-gray-900 text-white shadow-md'
-                                                : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                                        }`}
-                                    >
-                                        {model}
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 mt-3 pt-3 border-t border-gray-100">
+                            <span className="text-[10px] font-black uppercase text-gray-400 min-w-[60px] mt-0.5">Compatible:</span>
+                            <p className="text-xs text-gray-600 leading-relaxed flex-1">
+                                {product.compatibleModels!.join(', ')}
+                            </p>
                         </div>
                     )}
                 </div>
