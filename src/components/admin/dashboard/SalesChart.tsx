@@ -50,7 +50,7 @@ export const SalesChart = ({ data }: { data: any[] }) => {
             </div>
 
             <div className="h-[250px] md:h-[350px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <AreaChart
                         data={data}
                         margin={{ top: 10, right: 10, left: 0, bottom: 0 }}

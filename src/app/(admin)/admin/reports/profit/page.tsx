@@ -251,7 +251,7 @@ export default function ProfitReportPage() {
 
                         <div className="h-[360px] w-full">
                             {mounted && chartData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                     <AreaChart
                                         data={chartData}
                                         margin={{ top: 10, right: 10, left: -10, bottom: 0 }}

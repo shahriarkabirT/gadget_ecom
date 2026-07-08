@@ -1042,7 +1042,6 @@ export default function LandingPageClient({
             total={total}
             totalQty={isCombo ? totalQty : selectedProducts[0]?.qty || 1}
             isSubmitting={isSubmitting}
-            onDistrictChange={setCurrentDistrict}
             deliveryLocation={deliveryLocation}
             onDeliveryLocationChange={setDeliveryLocation}
             onSubmit={handleSubmit}

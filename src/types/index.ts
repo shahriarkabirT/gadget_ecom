@@ -440,6 +440,10 @@ export interface ISettings {
     googleClientId?: string;
     googleClientSecret?: string;
     
+    // Notifications
+    telegramBotToken?: string;
+    telegramChatId?: string;
+    
     createdAt: Date;
     updatedAt: Date;
 }

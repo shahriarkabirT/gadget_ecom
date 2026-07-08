@@ -455,7 +455,7 @@ export default function POSTerminal() {
                                 id="pos-search"
                                 ref={searchInputRef}
                                 type="text"
-                                placeholder="Scan barcode or search products..."
+                                placeholder="Search products..."
                                 className="pos-input py-3 text-lg" style={{ paddingLeft: '3rem' }}
                                 value={searchTerm}
                                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -498,7 +498,7 @@ export default function POSTerminal() {
                                             className="bg-[var(--pos-surface)] rounded-xl border border-[var(--pos-border)] overflow-hidden pos-product-card flex flex-col">
                                             <div className="aspect-square relative bg-[var(--pos-bg)] p-2">
                                                 {product.images?.[0] ? (
-                                                    <Image src={product.images[0]} alt={product.title} fill className="object-contain" />
+                                                    <Image src={product.images[0]} alt={product.title} fill sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw" className="object-contain" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-[var(--pos-text-dim)] text-xs">No Image</div>
                                                 )}

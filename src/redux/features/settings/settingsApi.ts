@@ -23,6 +23,10 @@ export const settingsApi = apiSlice.injectEndpoints({
             query: () => '/admin/settings/social-auth',
             providesTags: ['Settings'],
         }),
+        getNotificationSettings: builder.query<{ success: boolean; settings: ISettings }, void>({
+            query: () => '/admin/settings/notifications',
+            providesTags: ['Settings'],
+        }),
         updateSettings: builder.mutation<{ success: boolean; settings: ISettings }, Partial<ISettings>>({
             query: (body) => ({
                 url: '/admin/settings/contact',
@@ -63,6 +67,14 @@ export const settingsApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['Settings'],
         }),
+        updateNotificationSettings: builder.mutation<{ success: boolean; settings: ISettings }, { telegramBotToken?: string; telegramChatId?: string }>({
+            query: (body) => ({
+                url: '/admin/settings/notifications',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Settings'],
+        }),
         getPublicGeneralSettings: builder.query<{ success: boolean; settings: ISettings }, void>({
             query: () => '/settings/general',
             providesTags: ['Settings'],
@@ -82,4 +94,6 @@ export const {
     useGetPublicGeneralSettingsQuery,
     useGetSocialAuthSettingsQuery,
     useUpdateSocialAuthSettingsMutation,
+    useGetNotificationSettingsQuery,
+    useUpdateNotificationSettingsMutation,
 } = settingsApi;

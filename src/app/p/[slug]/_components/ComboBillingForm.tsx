@@ -12,7 +12,6 @@ interface BillingFormProps {
     totalQty: number;
     isSubmitting: boolean;
     onSubmit: (e: React.FormEvent, formData: any) => void;
-    onDistrictChange?: (district: string) => void;
     deliveryLocation: "inside" | "outside" | "";
     onDeliveryLocationChange: (loc: "inside" | "outside") => void;
 }
@@ -24,7 +23,6 @@ export default function ComboBillingForm({
     totalQty,
     isSubmitting,
     onSubmit,
-    onDistrictChange,
     deliveryLocation,
     onDeliveryLocationChange,
 }: BillingFormProps) {

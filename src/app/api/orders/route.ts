@@ -13,6 +13,7 @@ import Coupon from '@/models/Coupon';
 import Settings from '@/models/Settings';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { sendCapiPurchase } from '@/lib/meta-capi';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 // GET all orders (admin only)
 export async function GET(request: { url: string | URL; }) {
@@ -416,6 +417,10 @@ export async function POST(request: NextRequest) {
             userAgent: request.headers.get('user-agent') || '',
             sourceUrl: request.headers.get('referer') || '',
         }).catch(err => console.error('Meta CAPI trigger error:', err));
+
+        // Send Telegram Notification (async)
+        const telegramMessage = `🛒 <b>New Order Received!</b>\n\n<b>Order ID:</b> #${order.orderId}\n<b>Customer:</b> ${order.customerInfo.name}\n<b>Phone:</b> ${order.customerInfo.phone}\n<b>Amount:</b> ৳${order.totalAmount}\n<b>Method:</b> ${order.paymentMethod}\n<b>Source:</b> ${landingPageId ? 'Landing Page' : 'Website'}`;
+        sendTelegramNotification(telegramMessage).catch(err => console.error('Telegram trigger error:', err));
 
         return NextResponse.json({
             success: true,

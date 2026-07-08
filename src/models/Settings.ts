@@ -105,6 +105,14 @@ const SettingsSchema = new Schema<ISettingsDocument>(
             type: String,
             trim: true,
         },
+        telegramBotToken: {
+            type: String,
+            trim: true,
+        },
+        telegramChatId: {
+            type: String,
+            trim: true,
+        },
         brandName: {
             type: String,
             trim: true,
