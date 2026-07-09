@@ -156,7 +156,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
                     {link.hasMegaMenu ? (
                       <>
                         <button
-                          className={`relative px-4 py-2 transition-colors duration-200 text-sm md:text-[14px] lg:text-[15px] 2xl:text-base tracking-wide flex items-center gap-1.5 cursor-pointer ${isActive ? "text-gray-900 font-semibold" : "text-gray-500 font-medium hover:text-gray-900"}`}
+                          className={`relative px-4 py-2 transition-colors duration-200 text-sm md:text-[14px] lg:text-[15px] 2xl:text-base tracking-wide flex items-center gap-1.5 cursor-pointer ${isActive ? "text-primary font-semibold" : "text-gray-500 font-medium hover:text-primary"}`}
                         >
                           {link.label}
                           <svg
@@ -174,7 +174,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
                             />
                           </svg>
                           {isActive && (
-                            <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-gray-900" />
+                            <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-primary" />
                           )}
                         </button>
                         <div className="absolute left-0 top-full pt-2 opacity-0 invisible translate-y-2 group-hover/cat:opacity-100 group-hover/cat:visible group-hover/cat:translate-y-0 transition-all duration-200 z-50">
@@ -186,13 +186,13 @@ export default function Navbar({ initialSettings }: NavbarProps) {
                     ) : (
                       <Link
                         href={link.href}
-                        className={`relative px-4 py-2 transition-colors duration-200 text-sm md:text-[14px] lg:text-[15px] 2xl:text-base tracking-wide flex items-center cursor-pointer group/link ${isActive ? "text-gray-900 font-semibold" : "text-gray-500 font-medium hover:text-gray-900"}`}
+                        className={`relative px-4 py-2 transition-colors duration-200 text-sm md:text-[14px] lg:text-[15px] 2xl:text-base tracking-wide flex items-center cursor-pointer group/link ${isActive ? "text-primary font-semibold" : "text-gray-500 font-medium hover:text-primary"}`}
                       >
                         {link.label}
                         {isActive ? (
-                          <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-gray-900" />
+                          <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-primary" />
                         ) : (
-                          <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-gray-900 scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-center" />
+                          <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-primary scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-center" />
                         )}
                       </Link>
                     )}
