@@ -503,7 +503,9 @@ export interface IUserDocument extends Omit<IUser, '_id'>, Document { }
 export interface IReview {
     _id: string;
     productId: Types.ObjectId | string;
-    userId: Types.ObjectId | string;
+    userId?: Types.ObjectId | string;
+    reviewerName?: string;
+    reviewerAvatar?: string;
     rating: number;
     comment: string;
     images?: string[];

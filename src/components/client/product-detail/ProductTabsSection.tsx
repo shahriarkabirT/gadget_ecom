@@ -230,10 +230,14 @@ export default function ProductTabsSection({ product }: ProductTabsSectionProps)
                                         <div key={review._id} className="p-4 bg-gray-50 rounded border border-gray-100">
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-7 h-7 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-black text-xs">
-                                                        {review.userId?.name?.charAt(0)?.toUpperCase() || 'U'}
+                                                    <div className="relative w-7 h-7 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-black text-xs overflow-hidden">
+                                                        {review.reviewerAvatar || review.userId?.image ? (
+                                                            <Image src={review.reviewerAvatar || review.userId?.image} alt="Avatar" fill className="object-cover" sizes="28px" />
+                                                        ) : (
+                                                            (review.reviewerName || review.userId?.name)?.charAt(0)?.toUpperCase() || 'U'
+                                                        )}
                                                     </div>
-                                                    <span className="text-xs font-bold text-gray-800">{review.userId?.name || 'Anonymous'}</span>
+                                                    <span className="text-xs font-bold text-gray-800">{review.reviewerName || review.userId?.name || 'Anonymous'}</span>
                                                 </div>
                                                 <div className="flex gap-0.5">
                                                     {[1, 2, 3, 4, 5].map(s => (

@@ -101,7 +101,7 @@ export default function ProductFilters({ onClose }: ProductFiltersProps) {
                     return (
                         <div key={cat._id} className="space-y-1">
                             <div
-                                className={`flex items-center justify-between group rounded-md transition-all duration-300 ease-out ${isActive ? 'bg-black/5 text-black' : 'hover:bg-black/5'}`}
+                                className={`flex items-center justify-between group rounded-md transition-all duration-300 ease-out ${isActive ? 'bg-primary/5 text-primary' : 'hover:bg-primary/5'}`}
                             >
                                 <span
                                     onClick={() => {
@@ -111,7 +111,7 @@ export default function ProductFilters({ onClose }: ProductFiltersProps) {
                                         }
                                         onClose?.();
                                     }}
-                                    className={`flex-grow text-left py-2 px-3 text-sm font-medium cursor-pointer transition-colors duration-300 ${isActive ? 'text-black' : 'text-gray-600 group-hover:text-gray-900'}`}
+                                    className={`flex-grow text-left py-2 px-3 text-sm font-medium cursor-pointer transition-colors duration-300 ${isActive ? 'text-primary' : 'text-gray-600 group-hover:text-primary'}`}
                                 >
                                     {cat.name}
                                 </span>
@@ -219,7 +219,7 @@ export default function ProductFilters({ onClose }: ProductFiltersProps) {
                         </div>
                         <button
                             onClick={updateFilters}
-                            className="w-full py-2.5 bg-gray-900 text-white rounded-lg font-semibold text-xs hover:bg-black transition-all shadow-sm active:scale-[0.98] cursor-pointer"
+                            className="w-full py-2.5 bg-primary text-white rounded-lg font-semibold text-xs hover:bg-primary-dark transition-all shadow-sm active:scale-[0.98] cursor-pointer"
                         >
                             Refine Results
                         </button>

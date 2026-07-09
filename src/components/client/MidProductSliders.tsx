@@ -55,7 +55,10 @@ async function MidCategorySlider({ section }: { section: { id: string; title: st
     if (childIds.length > 0) orConditions.push({ childCategory: { $in: childIds }, isActive: true });
     if (subChildIds.length > 0) orConditions.push({ subChildCategory: { $in: subChildIds }, isActive: true });
 
-    const products = await Product.find({ $or: orConditions }).limit(10).lean();
+    const products = await Product.find({ $or: orConditions })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean();
 
     if (!products || products.length === 0) return null;
 

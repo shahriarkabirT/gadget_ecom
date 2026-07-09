@@ -9,9 +9,11 @@ import {
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 import Link from 'next/link';
+import AddReviewModal from '@/components/admin/reviews/AddReviewModal';
 
 export default function AdminReviewsPage() {
     const [page, setPage] = useState(1);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const { data: reviewsData, isLoading, refetch } = useAdminGetAllReviewsQuery({ page, limit: 10 });
     const [updateStatus, { isLoading: isUpdating }] = useAdminUpdateReviewStatusMutation();
     const [deleteReview, { isLoading: isDeleting }] = useAdminDeleteReviewMutation();
@@ -50,13 +52,28 @@ export default function AdminReviewsPage() {
         <div className="p-4 sm:p-8 space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-900">Review Management</h1>
-                <button
-                    onClick={() => refetch()}
-                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200"
-                >
-                    Refresh
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                        Add Review
+                    </button>
+                    <button
+                        onClick={() => refetch()}
+                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200"
+                    >
+                        Refresh
+                    </button>
+                </div>
             </div>
+
+            {isAddModalOpen && (
+                <AddReviewModal onClose={() => {
+                    setIsAddModalOpen(false);
+                    refetch();
+                }} />
+            )}
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
@@ -74,9 +91,22 @@ export default function AdminReviewsPage() {
                         <tbody className="divide-y divide-gray-100">
                             {reviewsData?.reviews.map((review: any) => (
                                 <tr key={review._id} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm font-bold text-gray-900">{review.userId?.name}</div>
-                                        <div className="text-[10px] text-gray-500">{review.userId?.email}</div>
+                                    <td className="px-6 py-4 flex items-center gap-3">
+                                        {review.reviewerAvatar || review.userId?.image ? (
+                                            <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0">
+                                                <Image src={review.reviewerAvatar || review.userId?.image} alt="Avatar" fill className="object-cover" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                                <span className="text-xs font-bold text-gray-500">
+                                                    {(review.reviewerName || review.userId?.name || '?').charAt(0).toUpperCase()}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <div className="text-sm font-bold text-gray-900">{review.reviewerName || review.userId?.name}</div>
+                                            <div className="text-[10px] text-gray-500">{review.userId?.email || 'Added by Admin'}</div>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <Link

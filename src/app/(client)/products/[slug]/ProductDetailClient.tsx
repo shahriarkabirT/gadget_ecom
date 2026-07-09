@@ -282,9 +282,8 @@ export default function ProductDetailClient({ initialProduct, serverOptions }: P
         router.push('/checkout?directBuy=true');
     };
 
-    // Split options into main column and sidebar based on option count threshold
-    const OPTION_THRESHOLD = 10;
-    const mainColumnOptions: string[] = [];
+    // All variant options are placed in the main column (middle), sidebar is reserved for compatible models
+    const mainColumnOptions: string[] = [...requiredOptions];
     const sidebarOptions: string[] = [];
     const optionsData: Record<string, string[]> = {};
 
@@ -298,11 +297,6 @@ export default function ProductDetailClient({ initialProduct, serverOptions }: P
             }).filter(Boolean))] as string[];
             
             optionsData[slug] = rawOptions;
-            if (rawOptions.length > OPTION_THRESHOLD) {
-                sidebarOptions.push(slug);
-            } else {
-                mainColumnOptions.push(slug);
-            }
         });
     }
 
@@ -418,29 +412,21 @@ export default function ProductDetailClient({ initialProduct, serverOptions }: P
         </div>
     ) : null;
 
-    // Variant selector JSX for sidebar column
-    const sidebarVariantSlot = sidebarOptions.length > 0 ? (
-        <div className="space-y-2 lg:space-y-4">
-            {sidebarOptions.map(renderOptionGroup)}
-        </div>
-    ) : null;
-
     const hasModels = (product.compatibleModels?.length ?? 0) > 0;
-    const showSidebarVariants = sidebarOptions.length > 0 || hasModels;
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
             {/* Breadcrumbs */}
-            <div className="bg-white border-b border-gray-100">
+            <div className="bg-transparent">
                 <div className="container mx-auto px-4 py-3">
                     <div className="flex items-center gap-2 text-[10px] lg:text-xs font-bold uppercase tracking-widest text-gray-400 overflow-x-auto whitespace-nowrap hide-scrollbar">
-                        <Link href="/" className="hover:text-indigo-600 transition-colors">Home</Link>
+                        <Link href="/" className="hover:text-primary transition-colors">Home</Link>
                         <span>/</span>
-                        <Link href="/products" className="hover:text-indigo-600 transition-colors">Products</Link>
+                        <Link href="/products" className="hover:text-primary transition-colors">Products</Link>
                         {product.category && (
                             <>
                                 <span>/</span>
-                                <Link href={`/products?category=${product.category.slug}`} className="hover:text-indigo-600 transition-colors">
+                                <Link href={`/products?category=${product.category.slug}`} className="hover:text-primary transition-colors">
                                     {product.category.name}
                                 </Link>
                             </>
@@ -489,17 +475,16 @@ export default function ProductDetailClient({ initialProduct, serverOptions }: P
                             variantSlot={
                                 <>
                                     {mainVariantSlot}
-                                    <div className={showSidebarVariants ? "block lg:hidden mt-4 space-y-4" : "block"}>
-                                        {sidebarVariantSlot}
-                                        {hasModels && (
-                                            <div className="mt-4 pt-4 border-t border-gray-100">
-                                                <h4 className="text-xs font-bold text-gray-900 mb-2 uppercase tracking-wide">Compatible Models:</h4>
-                                                <p className="text-sm text-gray-600 leading-relaxed">
-                                                    {product.compatibleModels.join(', ')}
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
+                                    {hasModels && (
+                                        <div className="block lg:hidden mt-4 pt-4 border-t border-gray-100">
+                                            <h4 className="text-xs font-bold text-gray-900 mb-2 uppercase tracking-wide">Select Compatible Model:</h4>
+                                            <CompatibleModelsSelector
+                                                models={product.compatibleModels}
+                                                selectedModel={selectedModel}
+                                                onSelect={setSelectedModel}
+                                            />
+                                        </div>
+                                    )}
                                 </>
                             }
                         />
@@ -508,19 +493,18 @@ export default function ProductDetailClient({ initialProduct, serverOptions }: P
                     {/* Col 3: More Products Sidebar */}
                     <div className="lg:col-span-3 hidden lg:block lg:pl-6 xl:pl-10">
                         <div className="border border-gray-100 rounded-xl p-4 sticky top-6 lg:-mt-4 bg-white">
-                            {showSidebarVariants ? (
+                            {hasModels ? (
                                 <div className="mt-2 space-y-6">
-                                    {sidebarVariantSlot}
-                                    {hasModels && (
-                                        <div>
-                                            <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2 uppercase tracking-wide text-sm">
-                                                Compatible Models
-                                            </h3>
-                                            <p className="text-sm text-gray-600 leading-relaxed">
-                                                {product.compatibleModels.join(', ')}
-                                            </p>
-                                        </div>
-                                    )}
+                                    <div>
+                                        <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2 uppercase tracking-wide text-sm">
+                                            Compatible Models
+                                        </h3>
+                                        <CompatibleModelsSelector
+                                            models={product.compatibleModels}
+                                            selectedModel={selectedModel}
+                                            onSelect={setSelectedModel}
+                                        />
+                                    </div>
                                 </div>
                             ) : (
                                 <ProductMoreSidebar

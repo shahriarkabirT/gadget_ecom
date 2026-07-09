@@ -11,7 +11,15 @@ const ReviewSchema = new Schema<IReviewDocument>(
         userId: {
             type: Schema.Types.ObjectId,
             ref: 'User',
-            required: true,
+            required: false,
+        },
+        reviewerName: {
+            type: String,
+            required: false,
+        },
+        reviewerAvatar: {
+            type: String,
+            required: false,
         },
         rating: {
             type: Number,

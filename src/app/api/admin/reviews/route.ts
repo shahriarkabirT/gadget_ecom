@@ -44,6 +44,51 @@ export async function GET(request: NextRequest) {
     }
 }
 
+export async function POST(request: NextRequest) {
+    const admin = await requirePermission('reviews');
+    if (!admin) {
+        return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        await dbConnect();
+        const body = await request.json();
+        const { productId, rating, comment, images, reviewerName, reviewerAvatar } = body;
+
+        if (!productId || !rating || !comment || !reviewerName) {
+            return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
+        }
+
+        const newReview = new Review({
+            productId,
+            reviewerName,
+            reviewerAvatar,
+            rating,
+            comment,
+            images: images || [],
+            isApproved: true, // Auto-approve admin-created reviews
+        });
+
+        await newReview.save();
+
+        // Update product metadata since it's auto-approved
+        const allApprovedReviews = await Review.find({ productId, isApproved: true });
+        const avgRating = allApprovedReviews.length > 0
+            ? allApprovedReviews.reduce((acc, r) => acc + r.rating, 0) / allApprovedReviews.length
+            : 0;
+
+        await Product.findByIdAndUpdate(productId, {
+            averageRating: avgRating,
+            reviewCount: allApprovedReviews.length
+        });
+
+        return NextResponse.json({ success: true, review: newReview }, { status: 201 });
+    } catch (error) {
+        console.error('Error creating admin review:', error);
+        return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+    }
+}
+
 export async function PATCH(request: NextRequest) {
     const admin = await requirePermission('reviews');
     if (!admin) {

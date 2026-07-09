@@ -37,6 +37,14 @@ export const reviewApi = createApi({
             }),
             invalidatesTags: ['Review'],
         }),
+        adminCreateReview: builder.mutation<{ success: boolean; review: IReview }, any>({
+            query: (body) => ({
+                url: '/admin/reviews',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Review'],
+        }),
     }),
 });
 
@@ -46,4 +54,5 @@ export const {
     useAdminGetAllReviewsQuery,
     useAdminUpdateReviewStatusMutation,
     useAdminDeleteReviewMutation,
+    useAdminCreateReviewMutation,
 } = reviewApi;

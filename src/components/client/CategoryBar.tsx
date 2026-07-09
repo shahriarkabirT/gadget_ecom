@@ -92,11 +92,11 @@ export default function CategoryBar({ initialCategories = [] }: CategoryBarProps
 
             <div
                 className={`hidden md:block w-full z-40 transition-all duration-300 ${isSticky
-                    ? `fixed top-0 left-0 right-0 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border-b border-gray-100 ${hoveredCat
+                    ? `fixed top-0 left-0 right-0 shadow-md ${hoveredCat
                         ? 'bg-white'
                         : 'bg-white/80 backdrop-blur-md hover:bg-white hover:backdrop-blur-none'
                     }`
-                    : 'relative bg-white border-b border-gray-100/80'
+                    : 'relative bg-white shadow-sm'
                     }`}
                 onMouseLeave={closeDropdown}
             >
@@ -136,14 +136,14 @@ export default function CategoryBar({ initialCategories = [] }: CategoryBarProps
                                         <Link
                                             href={`/products?category=${cat.slug}`}
                                             className={`flex items-center gap-1.5 px-3.5 py-2 2xl:px-4 2xl:py-2.5 text-[13px] 2xl:text-base font-medium whitespace-nowrap transition-all duration-200 rounded-lg ${isHovered
-                                                ? 'text-black bg-gray-100/80 shadow-sm'
-                                                : 'text-gray-600 hover:text-black hover:bg-gray-50/70'
+                                                ? 'text-primary bg-primary/5 shadow-sm'
+                                                : 'text-gray-600 hover:text-primary hover:bg-primary/5'
                                                 }`}
                                             onClick={closeDropdown}
                                         >
                                             {cat.name}
                                             {hasSubs && (
-                                                <ChevronDown className={`w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-gray-400 transition-all duration-200 ${isHovered ? 'rotate-180 text-black' : ''}`} />
+                                                <ChevronDown className={`w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-gray-400 transition-all duration-200 ${isHovered ? 'rotate-180 text-primary' : ''}`} />
                                             )}
                                         </Link>
                                     </div>

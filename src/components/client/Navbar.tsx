@@ -79,7 +79,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
 
   return (
     <>
-      <header className={`border-b border-gray-100 z-50 transition-all duration-300 ${(isMoreOpen || isUserMenuOpen)
+      <header className={`shadow-sm z-50 transition-all duration-300 ${(isMoreOpen || isUserMenuOpen)
           ? 'bg-white'
           : 'bg-white/80 backdrop-blur-md hover:bg-white hover:backdrop-blur-none'
         }`}>

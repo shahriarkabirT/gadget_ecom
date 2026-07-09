@@ -95,31 +95,27 @@
   margin-bottom: 1rem !important;
 }
 
-/* Custom Theme - Professional Whitish */
+/* Custom Theme - Pink Aesthetic */
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-  /* Slate 900 */
-  --primary: #1e293b;
-  /* Slate 800 (Professional Neutral) */
-  --primary-dark: #0f172a;
-  --secondary: #475569;
-  /* Slate 600 */
-  --accent: #2563eb;
-  /* Blue 600 (Subtle Accent for CTAs) */
+  --background: #FFF5F7;
+  --foreground: #222222;
+  --primary: #FF4F87;
+  --primary-dark: #E83F78;
+  --secondary: #FF4F87;
+  --accent: #FF2E6A;
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
-  --gray-50: #f8fafc;
-  --gray-100: #f1f5f9;
-  --gray-200: #e2e8f0;
-  --gray-300: #cbd5e1;
+  --gray-50: #FFF5F7;
+  --gray-100: #F3D6E1;
+  --gray-200: #F3D6E1;
+  --gray-300: #E83F78;
   --gray-400: #64748b;
   --gray-500: #475569;
   --gray-600: #475569;
-  --gray-700: #334155;
-  --gray-800: #1e293b;
-  --gray-900: #0f172a;
+  --gray-700: #222222;
+  --gray-800: #222222;
+  --gray-900: #222222;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.02), 0 1px 2px -1px rgb(0 0 0 / 0.02);
   --shadow-md:
@@ -149,6 +145,16 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
   --font-sans: var(--font-open-sans), "Open Sans", system-ui, sans-serif;
 }
 
@@ -289,7 +295,7 @@ body {
 
 .btn-outline {
   background: transparent;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--gray-200);
   color: var(--gray-700);
 }
 
@@ -321,7 +327,7 @@ body {
   width: 100%;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--gray-200);
   border-radius: var(--radius-md);
   background: white;
   color: var(--foreground);

@@ -48,7 +48,10 @@ async function SingleCategorySlider({ section }: { section: { id: string, title:
     const products = await Product.find({
         [section.type]: section.id,
         isActive: true
-    }).limit(12).lean();
+    })
+    .sort({ createdAt: -1 })
+    .limit(12)
+    .lean();
 
     if (!products || products.length === 0) return null;
 
