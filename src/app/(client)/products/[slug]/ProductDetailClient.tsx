@@ -416,29 +416,27 @@ export default function ProductDetailClient({ initialProduct, serverOptions }: P
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
-            {/* Breadcrumbs */}
-            <div className="bg-transparent">
-                <div className="container mx-auto px-4 py-3">
-                    <div className="flex items-center gap-2 text-[10px] lg:text-xs font-bold uppercase tracking-widest text-gray-400 overflow-x-auto whitespace-nowrap hide-scrollbar">
-                        <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-                        <span>/</span>
-                        <Link href="/products" className="hover:text-primary transition-colors">Products</Link>
-                        {product.category && (
-                            <>
-                                <span>/</span>
-                                <Link href={`/products?category=${product.category.slug}`} className="hover:text-primary transition-colors">
-                                    {product.category.name}
-                                </Link>
-                            </>
-                        )}
-                        <span>/</span>
-                        <span className="text-gray-900 truncate max-w-[200px] lg:max-w-none">{product.title}</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="container mx-auto px-4 py-4 lg:py-6">
+            <div className="container mx-auto px-4 pt-4  pb-0">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+
+                    {/* Breadcrumbs — full width row */}
+                    <div className="col-span-1 lg:col-span-12">
+                        <div className="flex items-center gap-2 text-[10px] lg:text-xs font-bold uppercase tracking-widest text-gray-400 overflow-x-auto whitespace-nowrap hide-scrollbar">
+                            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+                            <span>/</span>
+                            <Link href="/products" className="hover:text-primary transition-colors">Products</Link>
+                            {product.category && (
+                                <>
+                                    <span>/</span>
+                                    <Link href={`/products?category=${product.category.slug}`} className="hover:text-primary transition-colors">
+                                        {product.category.name}
+                                    </Link>
+                                </>
+                            )}
+                            <span>/</span>
+                            <span className="text-gray-900 truncate max-w-[200px] lg:max-w-none">{product.title}</span>
+                        </div>
+                    </div>
 
                     {/* Col 1: Images */}
                     <div className="lg:col-span-5">
@@ -520,7 +518,9 @@ export default function ProductDetailClient({ initialProduct, serverOptions }: P
                 </div>
 
                 {/* Tabs Section */}
+                <div className="mt-6 lg:mt-8">
                 <ProductTabsSection product={product} />
+                </div>
 
                 {/* Related Products */}
                 <div className="mt-8">
