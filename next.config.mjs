@@ -20,9 +20,7 @@ const nextConfig = {
     ],
   },
   compress: true,
-  experimental: {
-    optimizeCss: true,
-  },
+
   // Rewrite /uploads/* to a dynamic API route so newly uploaded files
   // are served immediately without needing a server restart.
   // Next.js caches public/ file list in memory at startup;

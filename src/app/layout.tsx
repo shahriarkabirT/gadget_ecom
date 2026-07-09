@@ -94,10 +94,10 @@ export default async function RootLayout({ children }: RootLayoutProps) {
                     </Script>
                 )}
 
-                {/* Facebook Pixel - Head Script (Commented out for GTM DataLayer approach) */}
-                {/* {pixelId && (
-                    <Script id="fb-pixel-script" strategy="afterInteractive">
-                        {\`
+                {/* Facebook Pixel - Head Script */}
+                {pixelId && (
+                    <Script id="fb-pixel-script" strategy="lazyOnload">
+                        {`
                             !function(f,b,e,v,n,t,s)
                             {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
                             n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -106,32 +106,11 @@ export default async function RootLayout({ children }: RootLayoutProps) {
                             t.src=v;s=b.getElementsByTagName(e)[0];
                             s.parentNode.insertBefore(t,s)}(window, document,'script',
                             'https://connect.facebook.net/en_US/fbevents.js');
-                            window.__META_PIXEL_ID__='\${pixelId}';
-                            fbq('set', 'autoConfig', false, '\${pixelId}');
-                            fbq('init', '\${pixelId}');
+                            fbq('init', '${pixelId}');
                             fbq('track', 'PageView');
-
-                            // Global dedup: patch fbq.callMethod after fbevents.js loads
-                            // This catches ALL sources (GTM, auto-events, our code)
-                            (function dedupPoll(){
-                                if(window.fbq && window.fbq.callMethod){
-                                    var orig=window.fbq.callMethod.bind(window.fbq);
-                                    var cache={};
-                                    window.fbq.callMethod=function(){
-                                        var a=[].slice.call(arguments);
-                                        if(a[0]==='track'){
-                                            var k=a[0]+'|'+a[1];
-                                            var now=Date.now();
-                                            if(cache[k]&&now-cache[k]<2000){return;}
-                                            cache[k]=now;
-                                        }
-                                        return orig.apply(null,a);
-                                    };
-                                }else{setTimeout(dedupPoll,100);}
-                            })();
-                        \`}
+                        `}
                     </Script>
-                )} */}
+                )}
 
                 {/* TikTok Pixel - Head Script */}
                 {tiktokPixelId && (
@@ -167,18 +146,19 @@ export default async function RootLayout({ children }: RootLayoutProps) {
                     </noscript>
                 )}
 
-                {/* Facebook Pixel (noscript) (Commented out for GTM) */}
-                {/* {pixelId && (
+                {/* Facebook Pixel (noscript) */}
+                {pixelId && (
                     <noscript>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             height="1"
                             width="1"
                             style={{ display: 'none' }}
-                            src={\`https://www.facebook.com/tr?id=\${pixelId}&ev=PageView&noscript=1\`}
+                            src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
                             alt=""
                         />
                     </noscript>
-                )} */}
+                )}
 
                 <NextTopLoader
                     color="#2563eb"
