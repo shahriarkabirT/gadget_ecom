@@ -3,7 +3,8 @@ import { Suspense } from 'react';
 import CategoriesPreview from '@/components/client/CategoriesPreview';
 import BrandsPreview from '@/components/client/BrandsPreview';
 import LandingProductSliders from '@/components/client/LandingProductSliders';
-import TopSellingProducts from '@/components/client/TopSellingProducts';
+import NewArrivalsSlider from '@/components/client/NewArrivalsSlider';
+// import TopSellingProducts from '@/components/client/TopSellingProducts';
 import FeaturedProducts from '@/components/client/FeaturedProducts';
 import Skeleton from '@/components/shared/Skeleton';
 import { CategoryCardSkeleton, ProductCardSkeleton } from '@/components/shared/Skeletons';
@@ -37,25 +38,27 @@ export default async function HomePage() {
                 <CategoriesPreview />
             </Suspense>
 
-            {/* Top Selling Products */}
+            {/* New Arrivals Products */}
             <Suspense fallback={
-                <section className="py-8 md:py-12 bg-gray-50/50">
+                <section className="py-8 md:py-12 bg-white">
                     <div className="container mx-auto px-4 xl:px-0">
-                        <div className="flex items-end justify-between mb-8 md:mb-10">
-                            <div className="space-y-2">
-                                <Skeleton width="100px" height="12px" />
-                                <Skeleton width="200px" height="32px" />
+                        <div className="flex items-end justify-between mb-6 md:mb-8 animate-pulse">
+                            <div>
+                                <div className="h-8 md:h-10 w-48 md:w-64 bg-gray-100 rounded mb-2"></div>
+                                <div className="h-4 w-24 bg-gray-100 rounded"></div>
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="bg-white rounded-xl h-[160px] animate-pulse shadow-sm"></div>
+                        <div className="flex gap-3 sm:gap-4 overflow-hidden">
+                            {[1, 2, 3, 4, 5, 6].map(i => (
+                                <div key={i} className="flex-none w-[calc((100%-12px)/2)] sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] 2xl:w-[calc((100%-80px)/6)]">
+                                    <ProductCardSkeleton />
+                                </div>
                             ))}
                         </div>
                     </div>
                 </section>
             }>
-                <TopSellingProducts />
+                <NewArrivalsSlider />
             </Suspense>
 
             {/* Brands Preview - Minimalistic Grid */}

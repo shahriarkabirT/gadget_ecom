@@ -48,7 +48,7 @@ export class SteadfastService implements ICourierService {
                 recipient_name: data.order.customerInfo.name,
                 recipient_phone: data.order.customerInfo.phone,
                 recipient_address: address,
-                cod_amount: data.order.totalAmount,
+                cod_amount: Math.max(0, data.order.totalAmount - (data.order.advancePaid || 0)),
                 note: data.instruction || data.order.customerInfo.notes || '',
             };
 

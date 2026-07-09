@@ -7,11 +7,12 @@ import ProductCard from './ProductCard';
 
 interface ProductsSliderClientProps {
     title: string;
-    categorySlug: string;
+    categorySlug?: string;
+    viewAllLink?: string;
     products: IProduct[];
 }
 
-export default function ProductsSliderClient({ title, categorySlug, products }: ProductsSliderClientProps) {
+export default function ProductsSliderClient({ title, categorySlug, viewAllLink, products }: ProductsSliderClientProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const snapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const unpauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -242,7 +243,7 @@ export default function ProductsSliderClient({ title, categorySlug, products }: 
                 <div>
                     <h2 className="text-lg sm:text-2xl md:text-3xl font-bold md:font-black text-gray-900 tracking-tight truncate">{title}</h2>
                     <Link
-                        href={`/products?category=${categorySlug}`}
+                        href={viewAllLink || (categorySlug ? `/products?category=${categorySlug}` : '/products')}
                         className="text-[10px] md:text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors uppercase tracking-widest mt-1 md:mt-2 inline-flex items-center gap-1 group"
                     >
                         VIEW ALL

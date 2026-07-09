@@ -30,8 +30,8 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { title, address, businessHours, contact, mapLink, image, isActive, order } = body;
 
-        if (!title || !address || !businessHours || !contact || !mapLink || !image) {
-            return NextResponse.json({ success: false, message: 'All fields are required' }, { status: 400 });
+        if (!title || !address || !businessHours || !contact || !image) {
+            return NextResponse.json({ success: false, message: 'All required fields must be provided' }, { status: 400 });
         }
 
         await dbConnect();

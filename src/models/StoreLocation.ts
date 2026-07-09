@@ -25,7 +25,6 @@ const StoreLocationSchema = new Schema<IStoreLocationDocument>(
         },
         mapLink: {
             type: String,
-            required: [true, 'Map link is required'],
             trim: true,
         },
         image: {

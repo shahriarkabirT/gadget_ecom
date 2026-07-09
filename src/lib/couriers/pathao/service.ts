@@ -150,7 +150,7 @@ export class PathaoService implements ICourierService {
                 special_instruction: data.instruction || '',
                 item_quantity: data.order.products.reduce((acc, p) => acc + p.quantity, 0),
                 item_weight: data.order.products.reduce((acc, p) => acc + (p.quantity * 0.5), 0).toString(), // String format for weight
-                amount_to_collect: data.order.paymentMethod === 'COD' ? data.order.totalAmount : 0,
+                amount_to_collect: data.order.paymentMethod === 'COD' ? Math.max(0, data.order.totalAmount - (data.order.advancePaid || 0)) : 0,
                 item_description: data.order.products.map(p => p.title).join(', ')
             };
 

@@ -66,7 +66,10 @@ export async function PUT(request, { params }) {
 
         const { id } = await params;
         const body = await request.json();
-        const { orderStatus, paymentStatus, isArchived, customerInfo, shippingCost } = body;
+        const { 
+            orderStatus, paymentStatus, isArchived, customerInfo, shippingCost,
+            advancePaid, advancePaymentMethod, advancePaymentRef 
+        } = body;
 
         await dbConnect();
 
@@ -128,6 +131,16 @@ export async function PUT(request, { params }) {
         if (typeof shippingCost === 'number') {
             order.shippingCost = shippingCost;
             order.totalAmount = order.subtotal + order.shippingCost + (order.taxAmount || 0) - (order.discountAmount || 0);
+        }
+
+        if (advancePaid !== undefined) {
+            order.advancePaid = advancePaid;
+        }
+        if (advancePaymentMethod !== undefined) {
+            order.advancePaymentMethod = advancePaymentMethod;
+        }
+        if (advancePaymentRef !== undefined) {
+            order.advancePaymentRef = advancePaymentRef;
         }
 
         await order.save();

@@ -236,7 +236,7 @@ export default function Footer() {
                         {/* Copyright & Attribution - Bottom on Mobile */}
                         <div className="w-full text-[13px] text-gray-500 font-medium text-center md:text-left">
                             <p>Copyright © {currentYear} {brandName}</p>
-                            <p className="mt-1">
+                            <p className="sr-only">
                                 Built with <span className="text-rose-500">❤</span> by{' '}
                                 <a
                                     href="https://ccloudlab.com"

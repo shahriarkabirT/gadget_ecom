@@ -198,6 +198,19 @@ const OrderSchema = new Schema<IOrderDocument>(
             type: Boolean,
             default: false,
         },
+        advancePaid: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
+        advancePaymentMethod: {
+            type: String,
+            trim: true,
+        },
+        advancePaymentRef: {
+            type: String,
+            trim: true,
+        },
     },
     {
         timestamps: true,

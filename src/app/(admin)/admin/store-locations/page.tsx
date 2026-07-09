@@ -167,15 +167,19 @@ export default function StoreLocationsPage() {
                                 </div>
 
                                 <div className="mt-4 flex items-center justify-between">
-                                    <a 
-                                        href={location.mapLink} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 hover:text-gray-900 uppercase tracking-widest py-1 transition-colors"
-                                    >
-                                        <ExternalLink className="w-3.5 h-3.5" />
-                                        Map Link
-                                    </a>
+                                    {location.mapLink ? (
+                                        <a 
+                                            href={location.mapLink} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 hover:text-gray-900 uppercase tracking-widest py-1 transition-colors"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                            Map Link
+                                        </a>
+                                    ) : (
+                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest py-1">No Map Link</span>
+                                    )}
                                     
                                     <button 
                                         onClick={() => handleEdit(location)}

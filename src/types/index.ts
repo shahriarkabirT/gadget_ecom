@@ -323,6 +323,9 @@ export interface IOrder {
     amountTendered?: number;
     ipAddress?: string;
     isPreorder?: boolean;
+    advancePaid?: number;
+    advancePaymentMethod?: string;
+    advancePaymentRef?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -559,7 +562,7 @@ export interface IStoreLocation {
     address: string;
     businessHours: string;
     contact: string;
-    mapLink: string;
+    mapLink?: string;
     image: string;
     order: number;
     isActive: boolean;

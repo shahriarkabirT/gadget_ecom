@@ -48,7 +48,7 @@ export class RedXService implements ICourierService {
                 delivery_area_id: data.deliveryAreaId,
                 customer_address: data.order.customerInfo.address,
                 merchant_invoice_id: data.order.orderId,
-                cash_collection_amount: data.order.totalAmount.toString(),
+                cash_collection_amount: Math.max(0, data.order.totalAmount - (data.order.advancePaid || 0)).toString(),
                 parcel_weight: (data.order.products.reduce((acc, p) => acc + ((p as any).weight || 500), 0)).toString(),
                 instruction: data.instruction || '',
                 value: data.order.totalAmount.toString(),

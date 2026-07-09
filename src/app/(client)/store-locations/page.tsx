@@ -57,17 +57,19 @@ export default function StoreLocationsPublicPage() {
                                     </div>
 
                                     {/* Get Direction Link */}
-                                    <div className="mt-8 xl:mt-10">
-                                        <a 
-                                            href={location.mapLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-2 font-bold text-gray-900 hover:gap-3 transition-all"
-                                        >
-                                            Get Direction
-                                            <ArrowRight className="w-4 h-4 ml-0.5" />
-                                        </a>
-                                    </div>
+                                    {location.mapLink && (
+                                        <div className="mt-8 xl:mt-10">
+                                            <a 
+                                                href={location.mapLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 font-bold text-gray-900 hover:gap-3 transition-all"
+                                            >
+                                                Get Direction
+                                                <ArrowRight className="w-4 h-4 ml-0.5" />
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}

@@ -47,6 +47,12 @@ export default function OrderDetailPage() {
     const [isEditingShipping, setIsEditingShipping] = useState(false);
     const [editShippingCost, setEditShippingCost] = useState<string>('');
 
+    // Advance Payment State
+    const [isEditingAdvance, setIsEditingAdvance] = useState(false);
+    const [editAdvancePaid, setEditAdvancePaid] = useState<string>('');
+    const [editAdvanceMethod, setEditAdvanceMethod] = useState<string>('');
+    const [editAdvanceRef, setEditAdvanceRef] = useState<string>('');
+
     // Courier State
     const [selectedCourier, setSelectedCourier] = useState('');
     const [deliveryAreaId, setDeliveryAreaId] = useState<number | undefined>();
@@ -269,6 +275,33 @@ export default function OrderDetailPage() {
                 setIsEditingShipping(false);
             } else {
                 toast.error(data.message || 'Failed to update shipping cost');
+            }
+        } catch (error) {
+            toast.error('An error occurred');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleAdvanceEdit = async () => {
+        setIsUpdating(true);
+        try {
+            const res = await fetch(`/api/orders/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    advancePaid: Number(editAdvancePaid) || 0,
+                    advancePaymentMethod: editAdvanceMethod,
+                    advancePaymentRef: editAdvanceRef
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success('Advance payment updated');
+                setOrder(data.order);
+                setIsEditingAdvance(false);
+            } else {
+                toast.error(data.message || 'Failed to update advance payment');
             }
         } catch (error) {
             toast.error('An error occurred');
@@ -522,6 +555,94 @@ export default function OrderDetailPage() {
                             <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100 mt-2">
                                 <span>Total</span>
                                 <span>{formatPrice(order.totalAmount)}</span>
+                            </div>
+
+                            {/* Advance Payment Section */}
+                            <div className="pt-2 border-t border-gray-100 mt-2">
+                                {isEditingAdvance ? (
+                                    <div className="space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="text-xs font-semibold text-gray-700 block mb-1">Paid Amount (BDT)</label>
+                                                <input
+                                                    type="number"
+                                                    value={editAdvancePaid}
+                                                    onChange={(e) => setEditAdvancePaid(e.target.value)}
+                                                    className="w-full text-sm border-gray-300 rounded px-2 py-1.5 focus:ring-primary focus:border-primary"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-semibold text-gray-700 block mb-1">Payment Method <span className="text-gray-400 font-normal">(Optional)</span></label>
+                                                <input
+                                                    type="text"
+                                                    value={editAdvanceMethod}
+                                                    onChange={(e) => setEditAdvanceMethod(e.target.value)}
+                                                    className="w-full text-sm border-gray-300 rounded px-2 py-1.5 focus:ring-primary focus:border-primary"
+                                                    placeholder="bKash, Nagad..."
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-gray-700 block mb-1">Reference (TrxID / Phone) <span className="text-gray-400 font-normal">(Optional)</span></label>
+                                            <input
+                                                type="text"
+                                                value={editAdvanceRef}
+                                                onChange={(e) => setEditAdvanceRef(e.target.value)}
+                                                className="w-full text-sm border-gray-300 rounded px-2 py-1.5 focus:ring-primary focus:border-primary"
+                                                placeholder="TrxID or Phone"
+                                            />
+                                        </div>
+                                        <div className="flex justify-end gap-2 pt-1">
+                                            <button
+                                                onClick={() => setIsEditingAdvance(false)}
+                                                className="text-xs px-3 py-1.5 text-gray-600 border border-gray-300 rounded hover:bg-gray-100 font-medium"
+                                                disabled={isUpdating}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleAdvanceEdit}
+                                                className="text-xs px-3 py-1.5 bg-gray-900 text-white rounded hover:bg-gray-800 font-medium disabled:opacity-50 flex items-center gap-1.5"
+                                                disabled={isUpdating}
+                                            >
+                                                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between text-sm group">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-500 font-medium">Advance Paid</span>
+                                                <button
+                                                    onClick={() => {
+                                                        setEditAdvancePaid(order.advancePaid?.toString() || '');
+                                                        setEditAdvanceMethod(order.advancePaymentMethod || '');
+                                                        setEditAdvanceRef(order.advancePaymentRef || '');
+                                                        setIsEditingAdvance(true);
+                                                    }}
+                                                    className="text-gray-400 hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                            <span className="font-semibold text-green-600">{formatPrice(order.advancePaid || 0)}</span>
+                                        </div>
+                                        {(order.advancePaymentMethod || order.advancePaymentRef) && (
+                                            <div className="flex justify-between text-xs text-gray-500">
+                                                <span>Method/Ref:</span>
+                                                <span className="font-medium text-gray-700">
+                                                    {order.advancePaymentMethod} {order.advancePaymentRef ? `(${order.advancePaymentRef})` : ''}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between text-base font-black text-rose-600 pt-2 mt-1 border-t border-gray-100">
+                                            <span>Due Amount</span>
+                                            <span>{formatPrice(order.totalAmount - (order.advancePaid || 0))}</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
