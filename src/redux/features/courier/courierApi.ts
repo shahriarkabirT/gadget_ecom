@@ -55,6 +55,20 @@ export const courierApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['Order', 'Courier'],
         }),
+        bulkSendOrderToCourier: builder.mutation<{ success: boolean; message: string; results: any }, {
+            orderIds: string[];
+            courierName: string;
+            pickupStoreId?: string;
+            isClosedBox?: boolean;
+            instruction?: string;
+        }>({
+            query: (body) => ({
+                url: `/orders/bulk-courier`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Order', 'Courier'],
+        }),
         trackCourierParcel: builder.query<{ success: boolean; status: string; history: any[]; message?: string }, { courierName: string; trackingId: string }>({
             query: ({ courierName, trackingId }) => ({
                 url: `/couriers/${courierName}/track`,
@@ -75,5 +89,6 @@ export const {
     useGetCourierStatsQuery,
     useGetRecentShipmentsQuery,
     useSendOrderToCourierMutation,
+    useBulkSendOrderToCourierMutation,
     useTrackCourierParcelQuery,
 } = courierApi;

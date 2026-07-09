@@ -14,6 +14,9 @@ interface OrderTableProps {
     onRestore?: (id: string) => void;
     onHardDelete?: (id: string) => void;
     isArchived?: boolean;
+    selectedOrderIds?: string[];
+    onSelectOrder?: (id: string, selected: boolean) => void;
+    onSelectAll?: (selected: boolean) => void;
 }
 
 export default function OrderTable({
@@ -26,6 +29,9 @@ export default function OrderTable({
     onRestore,
     onHardDelete,
     isArchived = false,
+    selectedOrderIds = [],
+    onSelectOrder,
+    onSelectAll,
 }: OrderTableProps) {
     const router = useRouter();
 
@@ -37,6 +43,16 @@ export default function OrderTable({
                     <table className="w-full">
                         <thead className="bg-gray-50 border-b border-gray-200">
                             <tr>
+                                {onSelectAll && (
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 w-10">
+                                        <input
+                                            type="checkbox"
+                                            className="checkbox checkbox-primary checkbox-sm border-gray-300 rounded cursor-pointer"
+                                            checked={orders.length > 0 && selectedOrderIds.length === orders.length}
+                                            onChange={(e) => onSelectAll(e.target.checked)}
+                                        />
+                                    </th>
+                                )}
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Order ID</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
@@ -59,6 +75,16 @@ export default function OrderTable({
                                         onClick={() => router.push(`/admin/orders/${order._id}`)}
                                         className="hover:bg-gray-50 transition-colors bg-white cursor-pointer group"
                                     >
+                                        {onSelectOrder && (
+                                            <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkbox checkbox-primary checkbox-sm border-gray-300 rounded cursor-pointer"
+                                                    checked={selectedOrderIds.includes(order._id)}
+                                                    onChange={(e) => onSelectOrder(order._id, e.target.checked)}
+                                                />
+                                            </td>
+                                        )}
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 {order.products?.[0]?.image && (
@@ -197,6 +223,16 @@ export default function OrderTable({
                         >
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">
+                                    {onSelectOrder && (
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="checkbox"
+                                                className="checkbox checkbox-primary checkbox-sm border-gray-300 rounded cursor-pointer"
+                                                checked={selectedOrderIds.includes(order._id)}
+                                                onChange={(e) => onSelectOrder(order._id, e.target.checked)}
+                                            />
+                                        </div>
+                                    )}
                                     {order.products?.[0]?.image && (
                                         <img 
                                             src={order.products[0].image} 

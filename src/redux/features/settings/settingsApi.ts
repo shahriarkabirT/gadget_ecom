@@ -27,6 +27,10 @@ export const settingsApi = apiSlice.injectEndpoints({
             query: () => '/admin/settings/notifications',
             providesTags: ['Settings'],
         }),
+        getIntegrationsSettings: builder.query<{ success: boolean; settings: ISettings }, void>({
+            query: () => '/admin/settings/integrations',
+            providesTags: ['Settings'],
+        }),
         updateSettings: builder.mutation<{ success: boolean; settings: ISettings }, Partial<ISettings>>({
             query: (body) => ({
                 url: '/admin/settings/contact',
@@ -75,6 +79,14 @@ export const settingsApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['Settings'],
         }),
+        updateIntegrationsSettings: builder.mutation<{ success: boolean; settings: ISettings }, { fraudBdApiKey?: string }>({
+            query: (body) => ({
+                url: '/admin/settings/integrations',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Settings'],
+        }),
         getPublicGeneralSettings: builder.query<{ success: boolean; settings: ISettings }, void>({
             query: () => '/settings/general',
             providesTags: ['Settings'],
@@ -96,4 +108,6 @@ export const {
     useUpdateSocialAuthSettingsMutation,
     useGetNotificationSettingsQuery,
     useUpdateNotificationSettingsMutation,
+    useGetIntegrationsSettingsQuery,
+    useUpdateIntegrationsSettingsMutation,
 } = settingsApi;

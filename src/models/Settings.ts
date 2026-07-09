@@ -113,6 +113,10 @@ const SettingsSchema = new Schema<ISettingsDocument>(
             type: String,
             trim: true,
         },
+        fraudBdApiKey: {
+            type: String,
+            trim: true,
+        },
         brandName: {
             type: String,
             trim: true,

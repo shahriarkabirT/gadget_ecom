@@ -14,6 +14,7 @@ import {
 } from '@/redux/features/courier/courierApi';
 import PrintableInvoice from '@/components/admin/PrintableInvoice';
 import OrderSourceBadge from '@/components/admin/orders/OrderSourceBadge';
+import FraudCheckCard from '@/components/admin/orders/FraudCheckCard';
 import { getOrderStatusDescription } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -589,6 +590,9 @@ export default function OrderDetailPage() {
                             </div>
                         )}
                     </div>
+
+                    {/* Fraud Detection / Customer Trust */}
+                    <FraudCheckCard phoneNumber={order.customerInfo.phone} />
                 </div>
 
                 {/* Sidebar Controls */}

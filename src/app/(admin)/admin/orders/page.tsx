@@ -5,8 +5,9 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import OrderTable from '@/components/admin/orders/OrderTable';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { RefreshCw, Search } from 'lucide-react';
+import { RefreshCw, Search, Truck } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import BulkCourierModal from '@/components/admin/orders/BulkCourierModal';
 
 export default function AdminOrdersPage() {
     const searchParams = useSearchParams();
@@ -22,6 +23,9 @@ export default function AdminOrdersPage() {
     const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
     const [searchInput, setSearchInput] = useState('');
     const searchQuery = useDebounce(searchInput, 400);
+
+    const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+    const [isBulkCourierModalOpen, setIsBulkCourierModalOpen] = useState(false);
 
     useEffect(() => {
         setStatusFilter(searchParams?.get('status') || '');
@@ -97,6 +101,16 @@ export default function AdminOrdersPage() {
     useEffect(() => {
         fetchOrders();
     }, [fetchOrders]);
+
+    const handleSelectOrder = (id: string, selected: boolean) => {
+        setSelectedOrderIds(prev =>
+            selected ? [...prev, id] : prev.filter(orderId => orderId !== id)
+        );
+    };
+
+    const handleSelectAll = (selected: boolean) => {
+        setSelectedOrderIds(selected ? orders.map((o: any) => o._id) : []);
+    };
 
     const handleArchive = async (id: string) => {
         try {
@@ -229,6 +243,9 @@ export default function AdminOrdersPage() {
                 onRestore={handleRestore}
                 onHardDelete={handleHardDelete}
                 isArchived={activeTab === 'archived'}
+                selectedOrderIds={selectedOrderIds}
+                onSelectOrder={handleSelectOrder}
+                onSelectAll={handleSelectAll}
             />
 
             {pagination.pages > 1 && (
@@ -256,6 +273,40 @@ export default function AdminOrdersPage() {
                     </div>
                 </div>
             )}
+
+            {/* Sticky Bulk Action Bar */}
+            {selectedOrderIds.length > 0 && activeTab !== 'archived' && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
+                    <span className="text-sm font-semibold whitespace-nowrap">
+                        {selectedOrderIds.length} order{selectedOrderIds.length > 1 ? 's' : ''} selected
+                    </span>
+                    <div className="w-px h-6 bg-gray-700"></div>
+                    <button
+                        onClick={() => setIsBulkCourierModalOpen(true)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+                    >
+                        <Truck className="w-4 h-4" />
+                        Dispatch via Courier
+                    </button>
+                    <button
+                        onClick={() => setSelectedOrderIds([])}
+                        className="text-gray-400 hover:text-white text-sm px-2 transition-colors ml-2"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            )}
+
+            <BulkCourierModal
+                isOpen={isBulkCourierModalOpen}
+                onClose={() => setIsBulkCourierModalOpen(false)}
+                selectedOrderIds={selectedOrderIds}
+                onSuccess={() => {
+                    setIsBulkCourierModalOpen(false);
+                    setSelectedOrderIds([]);
+                    fetchOrders();
+                }}
+            />
         </div>
     );
 }

@@ -444,6 +444,9 @@ export interface ISettings {
     telegramBotToken?: string;
     telegramChatId?: string;
     
+    // Integrations
+    fraudBdApiKey?: string;
+    
     createdAt: Date;
     updatedAt: Date;
 }

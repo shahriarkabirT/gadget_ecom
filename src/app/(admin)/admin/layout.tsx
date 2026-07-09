@@ -90,6 +90,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 { href: '/admin/settings/contact', label: 'Contact Settings' },
                 { href: '/admin/settings/social-auth', label: 'Social Auth Settings' },
                 { href: '/admin/settings/notifications', label: 'Notification Settings' },
+                { href: '/admin/settings/integrations', label: 'Integrations (Fraud BD)' },
                 { href: '/admin/couriers', label: 'Courier Settings'},
             ]
         },

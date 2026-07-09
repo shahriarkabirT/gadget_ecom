@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node --project tsconfig.server.json src/server.ts",
+    "dev": "nodemon --watch src/server.ts --exec ts-node --project tsconfig.server.json src/server.ts",
     "build": "next build && tsc --project tsconfig.server.json",
     "start": "NODE_ENV=production node dist/server.js",
     "lint": "eslint",
@@ -70,6 +70,7 @@
     "dotenv": "^17.4.0",
     "eslint": "^9",
     "eslint-config-next": "^16.2.5",
+    "nodemon": "^3.1.14",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
