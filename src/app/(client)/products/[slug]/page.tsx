@@ -41,9 +41,25 @@ export async function generateMetadata({ params }) {
         return { title: 'Product Not Found' };
     }
 
+    const title = `${data.product.title} - Store`;
+    const description = data.product.shortDescription || data.product.title;
+    const images = data.product.images?.[0] ? [{ url: data.product.images[0] }] : [];
+
     return {
-        title: `${data.product.title} - Store`,
-        description: data.product.shortDescription || data.product.title,
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            images,
+            type: 'website',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images,
+        }
     };
 }
 
