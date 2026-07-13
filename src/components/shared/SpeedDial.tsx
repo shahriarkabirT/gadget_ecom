@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toggleChat } from '@/redux/features/chat/chatSlice';
 import { RootState } from '@/redux/store';
 import { usePathname } from 'next/navigation';
-import { ChevronUp, MessageSquare, X, MessageCircle, Phone } from 'lucide-react';
+import { ChevronUp, MessagesSquare, X, MessageCircle, Phone } from 'lucide-react';
 
 interface SpeedDialProps {
     initialSettings: {
@@ -110,30 +110,23 @@ export default function SpeedDial({ initialSettings }: SpeedDialProps) {
             <button
                 onClick={handleScrollToTop}
                 aria-label="Scroll to top"
-                className="absolute flex items-center justify-center !p-0 rounded-full bg-white/40 backdrop-blur-[20px] shadow-xl shadow-black/[0.08] ring-1 ring-black/[0.05] border border-white/20 hover:bg-white/60 active:scale-95 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer outline-none w-14 h-14"
+                className="absolute flex items-center justify-center !p-0 rounded-full bg-white shadow-xl ring-1 ring-black/5 hover:bg-gray-50 text-gray-700 active:scale-95 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer outline-none w-14 h-14"
                 style={{
                     transform: `translateY(${
                         showScrollToTop 
                             ? (isOpen 
-                                ? (isDesktop ? '-160px' : '-140px') 
-                                : (isDesktop ? '-70px' : '-70px')
+                                ? '-216px'
+                                : '-72px'
                               ) 
                             : '40px'
-                    }) translateX(${
-                        showScrollToTop
-                            ? (isOpen
-                                ? (isDesktop ? '-0px' : '-0px')
-                                : (isDesktop ? '-0px' : '-0px')
-                              )
-                            : '0px'
-                    }) scale(${showScrollToTop ? 1 : 0})`,
+                    }) translateX(0px) scale(${showScrollToTop ? 1 : 0})`,
                     opacity: showScrollToTop ? 1 : 0,
                     pointerEvents: showScrollToTop ? 'auto' : 'none',
                     zIndex: 10,
                     borderRadius: '9999px',
                 }}
             >
-                <ChevronUp size={30} strokeWidth={2} className="text-gray-700 transition-transform duration-300 scroll-arrow" />
+                <ChevronUp size={30} strokeWidth={2} className="text-[#FF4F87] transition-transform duration-300 scroll-arrow" />
             </button>
 
             {/* Custom Flex FAB Container */}
@@ -142,7 +135,7 @@ export default function SpeedDial({ initialSettings }: SpeedDialProps) {
                 <div
                     role="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="btn btn-circle !p-0 w-14 h-14 rounded-full bg-white/40 backdrop-blur-[20px] text-gray-700 ring-1 ring-black/[0.05] hover:bg-white/60 border border-white/20 shadow-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] absolute cursor-pointer speed-dial-trigger"
+                    className="btn btn-circle !p-0 w-14 h-14 rounded-full bg-gradient-to-tr from-[#FF4F87] to-[#FF75A0] text-white hover:brightness-110 shadow-xl shadow-[#FF4F87]/30 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] absolute cursor-pointer speed-dial-trigger border-none"
                     style={{
                         transform: `scale(${isOpen ? 0 : 1})`,
                         opacity: isOpen ? 0 : 1,
@@ -151,7 +144,7 @@ export default function SpeedDial({ initialSettings }: SpeedDialProps) {
                         borderRadius: '9999px',
                     }}
                 >
-                    <MessageSquare size={34} strokeWidth={2} />
+                    <MessagesSquare size={34} strokeWidth={2} />
                 </div>
 
                 {/* Main Action Button (open state) */}
@@ -166,36 +159,15 @@ export default function SpeedDial({ initialSettings }: SpeedDialProps) {
                         borderRadius: '9999px',
                     }}
                 >
-                    <X size={34} strokeWidth={2.5} className="text-black" />
+                    <X size={34} strokeWidth={2.5} className="text-[#FF4F87]" />
                 </button>
 
-                {/* 3 Speed Dial Buttons (Perfect 90-degree quadrant flower layout with a slightly wider gap/radius) */}
-                {/* 1. Live Chat Option (Directly straight left - same horizontal row as the Speed Dial Trigger) */}
-                <div 
-                    className="tooltip tooltip-left absolute transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" 
-                    data-tip="Live Chat"
-                    style={{
-                        transform: `translateY(0px) translateX(${isOpen ? (isDesktop ? '-92px' : '-80px') : '0px'}) scale(${isOpen ? 1 : 0})`,
-                        opacity: isOpen ? 1 : 0,
-                        pointerEvents: isOpen ? 'auto' : 'none',
-                        zIndex: 7,
-                    }}
-                >
-                    <button
-                        onClick={handleLiveChat}
-                        className="btn btn-circle !p-0 w-14 h-14 rounded-full bg-white/40 backdrop-blur-[20px] text-gray-700 hover:bg-white/60 border border-white/20 shadow-xl"
-                        style={{ borderRadius: '9999px' }}
-                    >
-                        <MessageCircle size={30} strokeWidth={2} />
-                    </button>
-                </div>
-
-                {/* 2. WhatsApp Option (Fans Left/Diag-Up) */}
+                {/* 2. WhatsApp Option (Fans Left) */}
                 <div 
                     className="tooltip tooltip-left absolute transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" 
                     data-tip="WhatsApp"
                     style={{
-                        transform: `translateY(${isOpen ? (isDesktop ? '-65px' : '-57px') : '0px'}) translateX(${isOpen ? (isDesktop ? '-65px' : '-57px') : '0px'}) scale(${isOpen ? 1 : 0})`,
+                        transform: `translateY(${isOpen ? '-144px' : '0px'}) translateX(0px) scale(${isOpen ? 1 : 0})`,
                         opacity: isOpen ? 1 : 0,
                         pointerEvents: isOpen ? 'auto' : 'none',
                         zIndex: 8,
@@ -203,7 +175,7 @@ export default function SpeedDial({ initialSettings }: SpeedDialProps) {
                 >
                     <button
                         onClick={handleWhatsApp}
-                        className="btn btn-circle !p-0 w-14 h-14 rounded-full bg-white/40 backdrop-blur-[20px] text-gray-700 hover:bg-white/60 border border-white/20 shadow-xl"
+                        className="btn btn-circle !p-0 w-14 h-14 rounded-full bg-[#25D366] text-white hover:bg-[#20bd5a] shadow-xl border-none"
                         style={{ borderRadius: '9999px' }}
                     >
                         <svg
@@ -224,7 +196,7 @@ export default function SpeedDial({ initialSettings }: SpeedDialProps) {
                     className="tooltip tooltip-left absolute transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" 
                     data-tip="Call"
                     style={{
-                        transform: `translateY(${isOpen ? (isDesktop ? '-92px' : '-80px') : '0px'}) translateX(0px) scale(${isOpen ? 1 : 0})`,
+                        transform: `translateY(${isOpen ? '-72px' : '0px'}) translateX(0px) scale(${isOpen ? 1 : 0})`,
                         opacity: isOpen ? 1 : 0,
                         pointerEvents: isOpen ? 'auto' : 'none',
                         zIndex: 9,
@@ -232,7 +204,7 @@ export default function SpeedDial({ initialSettings }: SpeedDialProps) {
                 >
                     <button
                         onClick={handleCall}
-                        className="btn btn-circle !p-0 w-14 h-14 rounded-full bg-white/40 backdrop-blur-[20px] text-gray-700 hover:bg-white/60 border border-white/20 shadow-xl"
+                        className="btn btn-circle !p-0 w-14 h-14 rounded-full bg-[#007AFF] text-white hover:bg-[#006bdd] shadow-xl border-none"
                         style={{ borderRadius: '9999px' }}
                     >
                         <Phone size={30} strokeWidth={2} />

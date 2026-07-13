@@ -158,7 +158,7 @@ export default function ProductImageGallery({
                     )}
 
                     {discountValue > 0 && (
-                        <div className="absolute top-3 left-3 bg-orange-500 text-white text-[10px] font-black px-2.5 py-1 rounded z-10">
+                        <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-black px-2.5 py-1 rounded z-10">
                             {discountType === 'flat' ? `Save ৳${discountValue}` : `${discountValue}% OFF`}
                         </div>
                     )}

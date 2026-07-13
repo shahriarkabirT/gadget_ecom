@@ -9,7 +9,7 @@ export default function StoreLocationsPublicPage() {
     const { data: locations, isLoading } = useGetPublicStoreLocationsQuery();
 
     return (
-        <div className="min-h-screen bg-[#F9F9F9] py-12 md:py-20">
+        <div className="min-h-screen bg-background py-12 md:py-20">
             <div className="container mx-auto px-4 xl:px-0">
                 {/* Page Title */}
                 <h1 className="text-4xl md:text-5xl font-bold text-center text-gray-900 mb-16 md:mb-20">

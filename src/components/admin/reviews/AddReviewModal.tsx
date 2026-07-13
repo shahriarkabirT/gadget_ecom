@@ -37,10 +37,10 @@ export default function AddReviewModal({ onClose }: AddReviewModalProps) {
             const res = await axios.post('/api/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            setReviewerAvatar(res.data.url);
+            setReviewerAvatar(res.data.imageUrl);
             toast.success('Avatar uploaded!');
-        } catch (error) {
-            toast.error('Failed to upload avatar');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to upload avatar');
         } finally {
             setIsUploadingAvatar(false);
         }
@@ -58,12 +58,12 @@ export default function AddReviewModal({ onClose }: AddReviewModalProps) {
                 const res = await axios.post('/api/upload', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                newImages.push(res.data.url);
+                newImages.push(res.data.imageUrl);
             }
             setImages(newImages);
             toast.success('Images uploaded!');
-        } catch (error) {
-            toast.error('Failed to upload images');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to upload images');
         } finally {
             setIsUploadingImages(false);
         }

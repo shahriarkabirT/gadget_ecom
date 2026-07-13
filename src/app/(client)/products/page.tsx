@@ -12,7 +12,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: any
     const params = await searchParams;
 
     return (
-        <div className="bg-[#FDFDFD]">
+        <div className="bg-background">
             {/* Header Section */}
             <div className="bg-white border-b border-gray-100">
                 <div className="container mx-auto py-2.5 sm:py-3.5">

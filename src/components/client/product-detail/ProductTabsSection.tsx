@@ -248,9 +248,9 @@ export default function ProductTabsSection({ product }: ProductTabsSectionProps)
                                                 </div>
                                             </div>
                                             <p className="text-xs text-gray-700 leading-relaxed">{review.comment}</p>
-                                            {review.images?.length > 0 && (
+                                            {review.images?.filter(Boolean).length > 0 && (
                                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                                    {review.images.map((img: string, idx: number) => (
+                                                    {review.images.filter(Boolean).map((img: string, idx: number) => (
                                                         <div key={idx} className="relative w-14 h-14 rounded border border-gray-200 overflow-hidden">
                                                             <Image src={img} alt="" fill className="object-cover" sizes="56px" />
                                                         </div>
@@ -299,7 +299,7 @@ export default function ProductTabsSection({ product }: ProductTabsSectionProps)
                             {!isAuthenticated ? (
                                 <div className="text-center py-6">
                                 <p className="text-sm text-gray-500 mb-3">Please log in to write a review.</p>
-                                <Link href="/login" className="px-5 py-2 bg-orange-500 text-white font-bold text-sm rounded hover:bg-orange-600 transition-colors">
+                                <Link href="/login" className="px-5 py-2 bg-primary text-white font-bold text-sm rounded hover:bg-primary/90 transition-colors">
                                         Log In to Review
                                     </Link>
                                 </div>
@@ -344,7 +344,7 @@ export default function ProductTabsSection({ product }: ProductTabsSectionProps)
                                         </div>
                                     )}
                                     {reviewImages.length < 5 && (
-                                        <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-orange-500 transition-colors">
+                                        <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-primary transition-colors">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                                             Add Photos
                                             <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
@@ -354,7 +354,7 @@ export default function ProductTabsSection({ product }: ProductTabsSectionProps)
                                     <button
                                         type="submit"
                                         disabled={isSubmitting || isUploading}
-                                        className="w-full py-2.5 bg-gray-900 text-white text-sm font-black uppercase tracking-wider rounded hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                        className="w-full py-2.5 bg-primary text-white text-sm font-black uppercase tracking-wider rounded hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                     >
                                         {isSubmitting ? 'Submitting...' : 'Submit Review'}
                                     </button>

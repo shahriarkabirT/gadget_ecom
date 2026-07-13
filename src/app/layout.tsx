@@ -178,7 +178,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
                         <Suspense fallback={null}>
                                 {children}
                         </Suspense>
-                        <LazyChatWidget />
+                        {/* <LazyChatWidget /> */}
                     </AuthProvider>
                 </ReduxProvider>
 

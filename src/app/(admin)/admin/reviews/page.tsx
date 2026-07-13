@@ -3,19 +3,21 @@
 import React, { useState } from 'react';
 import {
     useAdminGetAllReviewsQuery,
-    useAdminUpdateReviewStatusMutation,
+    useAdminUpdateReviewMutation,
     useAdminDeleteReviewMutation,
 } from '@/redux/features/reviews/reviewApi';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 import Link from 'next/link';
 import AddReviewModal from '@/components/admin/reviews/AddReviewModal';
+import EditReviewModal from '@/components/admin/reviews/EditReviewModal';
 
 export default function AdminReviewsPage() {
     const [page, setPage] = useState(1);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [editingReview, setEditingReview] = useState<any>(null);
     const { data: reviewsData, isLoading, refetch } = useAdminGetAllReviewsQuery({ page, limit: 10 });
-    const [updateStatus, { isLoading: isUpdating }] = useAdminUpdateReviewStatusMutation();
+    const [updateStatus, { isLoading: isUpdating }] = useAdminUpdateReviewMutation();
     const [deleteReview, { isLoading: isDeleting }] = useAdminDeleteReviewMutation();
 
     const handleApprove = async (reviewId: string) => {
@@ -73,6 +75,16 @@ export default function AdminReviewsPage() {
                     setIsAddModalOpen(false);
                     refetch();
                 }} />
+            )}
+
+            {editingReview && (
+                <EditReviewModal
+                    review={editingReview}
+                    onClose={() => {
+                        setEditingReview(null);
+                        refetch();
+                    }}
+                />
             )}
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -133,7 +145,7 @@ export default function AdminReviewsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex gap-1">
-                                            {review.images?.map((img: string, idx: number) => (
+                                            {review.images?.filter(Boolean).map((img: string, idx: number) => (
                                                 <div key={idx} className="relative w-8 h-8 rounded border border-gray-100 overflow-hidden">
                                                     <Image src={img} alt="Review" fill className="object-cover" />
                                                 </div>
@@ -150,6 +162,15 @@ export default function AdminReviewsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => setEditingReview(review)}
+                                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Edit Review"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                                </svg>
+                                            </button>
                                             {review.isApproved ? (
                                                 <button
                                                     onClick={() => handleReject(review._id)}

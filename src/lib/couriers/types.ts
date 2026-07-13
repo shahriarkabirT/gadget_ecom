@@ -17,6 +17,7 @@ export interface CourierOrderRequest {
 export interface CourierOrderResponse {
     success: boolean;
     trackingId?: string;
+    parcelId?: string;
     message?: string;
     rawResponse?: any;
 }

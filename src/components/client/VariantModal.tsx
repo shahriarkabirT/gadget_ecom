@@ -434,7 +434,7 @@ export default function VariantModal({ product, isOpen, onClose }: VariantModalP
                                         <button
                                             onClick={handleBuyNow}
                                             disabled={availableToBuy === 0}
-                                            className="w-full h-11 flex items-center justify-center gap-2 rounded-md font-medium text-[14px] transition-all bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="w-full h-11 flex items-center justify-center gap-2 rounded-md font-medium text-[14px] transition-all bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Buy Now
                                         </button>

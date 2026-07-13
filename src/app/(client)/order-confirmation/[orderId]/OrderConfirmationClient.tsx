@@ -301,7 +301,7 @@ export default function OrderConfirmationClient({ order, status }: OrderConfirma
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto max-w-2xl">
         {/* Action Buttons - Hide on Print */}
         <div className="flex flex-col sm:flex-row justify-end gap-3 mb-4 print:hidden">

@@ -124,17 +124,17 @@ export default function ProductMoreSidebar({
                                     />
                                 )}
                                 {discountVal > 0 && (
-                                    <span className="absolute top-0 left-0 bg-orange-500 text-white text-[8px] font-black px-1 py-0.5 leading-none">
+                                    <span className="absolute top-0 left-0 bg-primary text-white text-[8px] font-black px-1 py-0.5 leading-none">
                                         {product.discountType === 'flat' ? `৳${discountVal} off` : `${discountVal}%`}
                                     </span>
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-gray-800 line-clamp-2 group-hover:text-orange-600 transition-colors leading-snug">
+                                <p className="text-xs font-semibold text-gray-800 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
                                     {product.title}
                                 </p>
                                 <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-sm font-black text-orange-600">{formatCurrency(price)}</span>
+                                    <span className="text-sm font-black text-primary">{formatCurrency(price)}</span>
                                     {discountVal > 0 && (
                                         <span className="text-[10px] text-gray-400 line-through">{formatCurrency(currentMrp)}</span>
                                     )}

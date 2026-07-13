@@ -15,13 +15,13 @@ import TrustBar from '@/components/client/TrustBar';
 
 export default async function HomePage() {
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-background">
             {/* Dynamic Hero Section */}
             <HeroBanner />
 
             {/* Categories Preview - Compact Cards */}
             <Suspense fallback={
-                <section className="py-20 bg-white">
+                <section className="py-20 bg-background">
                     <div className="container mx-auto">
                         <div className="flex items-end justify-between mb-12">
                             <div className="space-y-2">
@@ -40,7 +40,7 @@ export default async function HomePage() {
 
             {/* New Arrivals Products */}
             <Suspense fallback={
-                <section className="py-8 md:py-12 bg-white">
+                <section className="py-8 md:py-12 bg-background">
                     <div className="container mx-auto px-4 xl:px-0">
                         <div className="flex items-end justify-between mb-6 md:mb-8 animate-pulse">
                             <div>
@@ -63,7 +63,7 @@ export default async function HomePage() {
 
             {/* Brands Preview - Minimalistic Grid */}
             <Suspense fallback={
-                <section className="py-6 md:py-10 bg-white">
+                <section className="py-6 md:py-10 bg-background">
                     <div className="container mx-auto px-4 xl:px-0">
                         <div className="flex items-end justify-between mb-6 md:mb-8">
                             <div className="space-y-2">
@@ -84,7 +84,7 @@ export default async function HomePage() {
 
             {/* Dynamic Landing Page Product Sliders */}
             <Suspense fallback={
-                <section className="py-10 bg-white">
+                <section className="py-10 bg-background">
                     <div className="container mx-auto">
                         <div className="flex items-end justify-between mb-8">
                             <div className="space-y-2">

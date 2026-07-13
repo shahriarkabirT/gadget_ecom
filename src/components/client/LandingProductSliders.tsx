@@ -56,7 +56,7 @@ async function SingleCategorySlider({ section }: { section: { id: string, title:
     if (!products || products.length === 0) return null;
 
     return (
-        <section className="w-full bg-white">
+        <section className="w-full bg-transparent">
             <div className="container mx-auto px-4 xl:px-0">
                 <ProductsSliderClient 
                     title={`Shop ${section.title}`} 
@@ -70,7 +70,7 @@ async function SingleCategorySlider({ section }: { section: { id: string, title:
 
 function CategorySliderSkeleton({ title }: { title: string }) {
     return (
-        <section className="w-full bg-white">
+        <section className="w-full bg-transparent">
             <div className="container mx-auto px-4 xl:px-0">
                 <div className="flex items-end justify-between mb-6 md:mb-8 animate-pulse">
                     <div>

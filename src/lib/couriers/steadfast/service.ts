@@ -60,6 +60,7 @@ export class SteadfastService implements ICourierService {
                 return {
                     success: true,
                     trackingId: response.data.consignment.tracking_code,
+                    parcelId: response.data.consignment.consignment_id?.toString(),
                     message: response.data.message || 'Consignment created successfully',
                     rawResponse: response.data
                 };

@@ -51,7 +51,8 @@ export async function GET(
         return NextResponse.json({
             success: true,
             status: result.status,
-            history: result.history || []
+            history: result.history || [],
+            rawResponse: result.rawResponse
         });
 
     } catch (error: any) {

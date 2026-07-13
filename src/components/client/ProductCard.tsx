@@ -253,7 +253,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             {/* Info Section */}
             <div className="px-4 pb-4 pt-1 flex flex-col flex-grow bg-white">
                 <Link href={`/products/${product.slug}`} className="block group/title mb-2.5">
-                    <h3 className="text-[14px] sm:text-[15px] font-normal text-gray-800 line-clamp-2 leading-snug group-hover/title:text-primary transition-colors min-h-[44px]">
+                    <h3 className="text-[14px] sm:text-[15px] font-normal text-gray-800 line-clamp-2 leading-snug group-hover/title:text-primary transition-colors">
                         {product.title}
                     </h3>
                 </Link>

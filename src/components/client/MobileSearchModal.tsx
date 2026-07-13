@@ -93,7 +93,7 @@ export default function MobileSearchModal({ isOpen, onClose }: MobileSearchModal
                         placeholder="Search In..."
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        className="w-full bg-white py-3 pl-4 pr-12 text-sm focus:outline-none"
+                        className="w-full bg-white py-3 pl-4 pr-12 text-base focus:outline-none"
                     />
                     <button
                         type="submit"

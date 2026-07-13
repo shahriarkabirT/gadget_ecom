@@ -22,7 +22,7 @@ export const reviewApi = createApi({
             query: ({ page = 1, limit = 10 }) => `/admin/reviews?page=${page}&limit=${limit}`,
             providesTags: ['Review'],
         }),
-        adminUpdateReviewStatus: builder.mutation<{ success: boolean; review: IReview }, { reviewId: string; isApproved: boolean }>({
+        adminUpdateReview: builder.mutation<{ success: boolean; review: IReview }, { reviewId: string; isApproved?: boolean; rating?: number; comment?: string; images?: string[]; reviewerName?: string; reviewerAvatar?: string; }>({
             query: (body) => ({
                 url: '/admin/reviews',
                 method: 'PATCH',
@@ -52,7 +52,7 @@ export const {
     useGetApprovedReviewsQuery,
     useSubmitReviewMutation,
     useAdminGetAllReviewsQuery,
-    useAdminUpdateReviewStatusMutation,
+    useAdminUpdateReviewMutation,
     useAdminDeleteReviewMutation,
     useAdminCreateReviewMutation,
 } = reviewApi;

@@ -8,7 +8,7 @@ export default async function PaymentFailPage({ searchParams }) {
     const { orderId } = await searchParams;
 
     return (
-        <div className="min-h-screen bg-[#FDFDFD] py-12">
+        <div className="min-h-screen bg-background py-12">
             <div className="container mx-auto max-w-md">
                 <div className="card p-6 text-center rounded-2xl border-none shadow-sm">
                     {/* Error Icon */}

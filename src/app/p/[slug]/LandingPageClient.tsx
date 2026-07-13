@@ -550,7 +550,7 @@ export default function LandingPageClient({
   }
 
   return (
-    <div className="min-h-screen bg-white font-['Hind_Siliguri',_sans-serif] text-[#111] overflow-x-clip pb-20 md:pb-0">
+    <div className="min-h-screen bg-[#FFF5F7] font-['Hind_Siliguri',_sans-serif] text-[#111] overflow-x-clip pb-20 md:pb-0">
       {/* STICKY TOP BAR */}
       <div className="sticky top-0 z-[999] bg-[#1a1a2e] text-white px-3 sm:px-4 py-3 sm:py-5 lg:py-6 shadow-lg">
         <div className="max-w-7xl mx-auto">
@@ -994,7 +994,7 @@ export default function LandingPageClient({
       {/* CHECKOUT */}
       <section
         id="checkout"
-        className="bg-[#f8f8f8] py-10 sm:py-16 lg:py-20 px-3 sm:px-5 scroll-mt-14"
+        className="bg-[#FFF5F7] py-10 sm:py-16 lg:py-20 px-3 sm:px-5 scroll-mt-14"
       >
         <div className="max-w-7xl mx-auto">
           <div className="bg-[#111] text-white text-center py-4 sm:py-5 px-4 sm:px-8 rounded-xl sm:rounded-2xl text-sm sm:text-lg lg:text-xl font-black mb-6 sm:mb-12 shadow-2xl leading-snug">

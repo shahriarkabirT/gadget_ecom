@@ -98,20 +98,28 @@ export async function PATCH(request: NextRequest) {
     try {
         await dbConnect();
         const body = await request.json();
-        const { reviewId, isApproved } = body;
+        const { reviewId, isApproved, rating, comment, images, reviewerName, reviewerAvatar } = body;
 
         if (!reviewId) {
             return NextResponse.json({ success: false, message: 'Review ID is required' }, { status: 400 });
         }
 
-        const review = await Review.findByIdAndUpdate(reviewId, { isApproved }, { new: true });
+        const updateData: any = {};
+        if (isApproved !== undefined) updateData.isApproved = isApproved;
+        if (rating !== undefined) updateData.rating = rating;
+        if (comment !== undefined) updateData.comment = comment;
+        if (images !== undefined) updateData.images = images;
+        if (reviewerName !== undefined) updateData.reviewerName = reviewerName;
+        if (reviewerAvatar !== undefined) updateData.reviewerAvatar = reviewerAvatar;
+
+        const review = await Review.findByIdAndUpdate(reviewId, updateData, { new: true });
 
         if (!review) {
             return NextResponse.json({ success: false, message: 'Review not found' }, { status: 404 });
         }
 
-        // If approved, update product metadata
-        if (isApproved) {
+        // Recalculate product metadata if rating or approval status changed
+        if (updateData.isApproved !== undefined || updateData.rating !== undefined) {
             const productId = review.productId;
             const allApprovedReviews = await Review.find({ productId, isApproved: true });
             const avgRating = allApprovedReviews.length > 0

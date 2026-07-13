@@ -129,6 +129,7 @@ export async function POST(req: NextRequest) {
                     order.paymentDetails = {
                         ...order.paymentDetails,
                         trackingId: result.trackingId,
+                        parcelId: result.parcelId,
                         courier: courierName,
                         sentToCourierAt: new Date(),
                         city_id,

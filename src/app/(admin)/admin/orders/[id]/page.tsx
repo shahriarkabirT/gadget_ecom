@@ -55,6 +55,10 @@ export default function OrderDetailPage() {
 
     // Courier State
     const [selectedCourier, setSelectedCourier] = useState('');
+
+    // Status Confirmation State
+    const [pendingStatusUpdate, setPendingStatusUpdate] = useState<{ field: 'orderStatus' | 'paymentStatus', value: string } | null>(null);
+
     const [deliveryAreaId, setDeliveryAreaId] = useState<number | undefined>();
     const [deliveryAreaName, setDeliveryAreaName] = useState('');
     const [pickupStoreId, setPickupStoreId] = useState('');
@@ -731,7 +735,7 @@ export default function OrderDetailPage() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Order Status</label>
                                 <select
                                     value={order.orderStatus}
-                                    onChange={(e) => updateStatus('orderStatus', e.target.value)}
+                                    onChange={(e) => setPendingStatusUpdate({ field: 'orderStatus', value: e.target.value })}
                                     disabled={isUpdating || order.orderStatus === 'Returned' || order.paymentStatus === 'Refunded'}
                                     className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-all disabled:opacity-60 disabled:bg-gray-50"
                                 >
@@ -751,7 +755,7 @@ export default function OrderDetailPage() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
                                 <select
                                     value={order.paymentStatus}
-                                    onChange={(e) => updateStatus('paymentStatus', e.target.value)}
+                                    onChange={(e) => setPendingStatusUpdate({ field: 'paymentStatus', value: e.target.value })}
                                     disabled={isUpdating || order.orderStatus === 'Returned' || order.paymentStatus === 'Refunded'}
                                     className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-all disabled:opacity-60 disabled:bg-gray-50"
                                 >
@@ -765,6 +769,41 @@ export default function OrderDetailPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Status Confirmation Modal */}
+                    {pendingStatusUpdate && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+                                <div className="flex items-center gap-3 text-gray-900 mb-4">
+                                    <AlertCircle className="w-6 h-6 text-yellow-500" />
+                                    <h3 className="text-lg font-bold">Confirm Change</h3>
+                                </div>
+                                <p className="text-sm text-gray-600 mb-6">
+                                    Are you sure you want to change the {pendingStatusUpdate.field === 'orderStatus' ? 'Order Status' : 'Payment Status'} to <span className="font-bold text-gray-900">{pendingStatusUpdate.value}</span>?
+                                </p>
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setPendingStatusUpdate(null)}
+                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                        disabled={isUpdating}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            await updateStatus(pendingStatusUpdate.field, pendingStatusUpdate.value);
+                                            setPendingStatusUpdate(null);
+                                        }}
+                                        className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2 transition-colors"
+                                        disabled={isUpdating}
+                                    >
+                                        {isUpdating && <Loader2 className="w-4 h-4 animate-spin" />}
+                                        Confirm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                         <h2 className="text-base font-semibold text-gray-900 mb-4">Payment Details</h2>
@@ -1051,6 +1090,15 @@ export default function OrderDetailPage() {
                                     </div>
                                     <p className="text-xs font-mono text-gray-900 break-all">{order.paymentDetails.trackingId}</p>
                                     
+                                    {order.paymentDetails.parcelId && (
+                                        <div className="mt-3 pt-3 border-t border-gray-100">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Parcel ID / Consignment ID</p>
+                                            <p className="text-xs font-mono text-gray-900 break-all">
+                                                {order.paymentDetails.parcelId}
+                                            </p>
+                                        </div>
+                                    )}
+
                                     {order.paymentDetails.area_name && (
                                         <div className="mt-3 pt-3 border-t border-gray-100">
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Area / Police Station</p>

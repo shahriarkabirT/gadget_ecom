@@ -17,8 +17,12 @@ async function getFeaturedProducts(): Promise<IProduct[]> {
 export default async function FeaturedProducts() {
     const products = await getFeaturedProducts();
 
+    if (products.length === 0) {
+        return null;
+    }
+
     return (
-        <section className="py-6 md:py-8 bg-gray-50/50">
+        <section className="py-6 md:py-8 bg-transparent">
             <div className="container mx-auto">
                 <div className="text-center mb-6 md:mb-10">
                     <h2 className="text-lg sm:text-2xl md:text-3xl font-bold md:font-black text-gray-900 tracking-tight truncate">Featured Collection</h2>

@@ -18,6 +18,7 @@ import {
   Phone,
   MessageCircle,
   Menu,
+  Search,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -38,6 +39,7 @@ const WhatsAppIcon = ({ className, style, fill }: { className?: string; style?: 
 import CartDrawer from "./CartDrawer";
 import CategoryMegaMenu from "./CategoryMegaMenu";
 import SearchBar from "./SearchBar";
+import MobileSearchModal from "./MobileSearchModal";
 
 interface NavbarProps {
   initialSettings?: Partial<ISettings> | null;
@@ -50,6 +52,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const { getItemCount } = useCart();
   const { wishlistCount } = useWishlist();
@@ -85,22 +88,8 @@ export default function Navbar({ initialSettings }: NavbarProps) {
         }`}>
         <nav className="container mx-auto">
           <div className="flex items-center justify-between h-[72px] 2xl:h-20 gap-4">
-            {/* Mobile Hamburger Menu - Left */}
-            <div className="md:hidden flex-none">
-              <button
-                onClick={() => {
-                  // We can dispatch an event or use context if there is a global menu
-                  document.dispatchEvent(new CustomEvent('open-mobile-menu'));
-                }}
-                className="p-2 -ml-2 text-gray-700 hover:text-primary transition-colors cursor-pointer"
-                aria-label="Open Menu"
-              >
-                <Menu className="w-7 h-7" strokeWidth={1.5} />
-              </button>
-            </div>
-
-            {/* Section 1: Logo - Desktop Left / Mobile Center */}
-            <div className="flex-shrink-0 flex-1 md:flex-none flex justify-center md:justify-start">
+            {/* Section 1: Logo - Desktop Left / Mobile Left */}
+            <div className="flex-shrink-0 flex-none flex justify-start">
               {logoSettings.url ? (
                 <Link
                   href="/"
@@ -250,6 +239,18 @@ export default function Navbar({ initialSettings }: NavbarProps) {
                 </div>
                 <span className="text-[10px] 2xl:text-[11px] font-medium">Wishlist</span>
               </Link>
+              <button
+                onClick={() => setIsMobileSearchOpen(true)}
+                aria-label="Search"
+                className="md:hidden flex flex-col items-center gap-1 p-1.5 text-gray-800 hover:text-primary transition-colors group cursor-pointer"
+              >
+                <div className="relative">
+                  <Search
+                    className="w-6 h-6 md:group-hover:text-primary transition-colors"
+                    strokeWidth={1.5}
+                  />
+                </div>
+              </button>
               <button
                 onClick={() => setIsCartOpen(true)}
                 aria-label="Open Cart"
@@ -492,6 +493,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
       </header>
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <MobileSearchModal isOpen={isMobileSearchOpen} onClose={() => setIsMobileSearchOpen(false)} />
     </>
   );
 }

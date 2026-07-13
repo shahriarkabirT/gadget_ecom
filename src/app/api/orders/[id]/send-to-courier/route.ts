@@ -65,6 +65,7 @@ export async function POST(
             order.paymentDetails = {
                 ...order.paymentDetails,
                 trackingId: result.trackingId,
+                parcelId: result.parcelId,
                 courier: courierName,
                 sentToCourierAt: new Date(),
                 // Ensure IDs and Names are persisted

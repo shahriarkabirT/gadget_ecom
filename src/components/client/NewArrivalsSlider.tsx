@@ -14,7 +14,7 @@ export default async function NewArrivalsSlider() {
     if (!products || products.length === 0) return null;
 
     return (
-        <section className="w-full bg-white py-10 md:py-16">
+        <section className="w-full bg-transparent py-10 md:py-16">
             <div className="container mx-auto px-4 xl:px-0">
                 <ProductsSliderClient 
                     title="New Arrivals" 

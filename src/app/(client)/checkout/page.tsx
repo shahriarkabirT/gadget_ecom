@@ -456,7 +456,7 @@ function CheckoutContent() {
     };
 
     return (
-        <div className="min-h-screen bg-[#FDFDFD] py-8 relative">
+        <div className="min-h-screen bg-background py-8 relative">
             {/* Address Selection Modal */}
             {showAddressModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">

@@ -135,7 +135,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         { href: '/admin/refunds', label: 'Returns & Refunds', icon: 'refunds', permKey: 'refunds' },
         
         { href: '/admin/messages', label: 'Messages', icon: 'messages', permKey: 'messages' },
-        { href: '/admin/chat', label: 'Live Chat', icon: 'chat', permKey: 'chat' },
+        // { href: '/admin/chat', label: 'Live Chat', icon: 'chat', permKey: 'chat' },
         { href: '/admin/reviews', label: 'Reviews', icon: 'reviews', permKey: 'reviews' },
         { href: '/admin/landing-pages', label: 'Landing Pages', icon: 'landing', permKey: 'landing-pages' },
         { href: '/admin/blogs', label: 'Blogs', icon: 'blog', permKey: 'blogs' },

@@ -4,6 +4,8 @@ import Product from '@/models/Product';
 import Blog from '@/models/Blog';
 import LandingPage from '@/models/LandingPage';
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {
         await dbConnect();

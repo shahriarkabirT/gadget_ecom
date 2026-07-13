@@ -81,7 +81,7 @@ export default function ProductInfo({
 
             {/* Price */}
             <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
-                <span className="text-lg lg:text-xl xl:text-2xl font-black text-orange-600">{formatCurrency(discountedPrice)}</span>
+                <span className="text-lg lg:text-xl xl:text-2xl font-black text-primary">{formatCurrency(discountedPrice)}</span>
                 {currentDiscountValue > 0 && (
                     <>
                         <span className="text-sm lg:text-base text-gray-400 line-through">{formatCurrency(currentMrp)}</span>
@@ -146,7 +146,7 @@ export default function ProductInfo({
                     <button
                         onClick={onAddToCart}
                         disabled={availableToBuy === 0 && !product.preorder}
-                        className="w-full py-2 lg:py-3 px-2 lg:px-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-[11px] lg:text-sm rounded transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer"
+                        className="w-full py-2 lg:py-3 px-2 lg:px-4 bg-gray-900 hover:bg-black text-white font-black text-[11px] lg:text-sm rounded transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z" />
@@ -180,7 +180,7 @@ export default function ProductInfo({
                                 animation: (availableToBuy > 0 || product.preorder) ? 'bellRing 1.6s ease-in-out infinite' : 'none',
                                 transformOrigin: 'center bottom',
                             }}
-                            className="w-full py-2 lg:py-3 px-2 lg:px-4 bg-gray-900 hover:bg-black text-white font-black text-[11px] lg:text-sm rounded transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer shadow-md hover:shadow-lg"
+                            className="w-full py-2 lg:py-3 px-2 lg:px-4 bg-primary hover:bg-primary/90 text-white font-black text-[11px] lg:text-sm rounded transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer shadow-md hover:shadow-lg"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />

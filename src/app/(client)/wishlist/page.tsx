@@ -27,7 +27,7 @@ export default function WishlistPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#FDFDFD] py-12 sm:py-16">
+        <div className="min-h-screen bg-background py-12 sm:py-16">
             <div className="container mx-auto">
                 <div className="mb-8">
                     <nav className="flex mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">
