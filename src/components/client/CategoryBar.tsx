@@ -93,10 +93,10 @@ export default function CategoryBar({ initialCategories = [] }: CategoryBarProps
             <div
                 className={`hidden md:block w-full z-40 transition-all duration-300 ${isSticky
                     ? `fixed top-0 left-0 right-0 shadow-md ${hoveredCat
-                        ? 'bg-pink-600'
-                        : 'bg-pink-600/95 backdrop-blur-md hover:bg-pink-600 hover:backdrop-blur-none'
+                        ? 'bg-[#FF5087]'
+                        : 'bg-[#FF5087]/95 backdrop-blur-md hover:bg-[#FF5087] hover:backdrop-blur-none'
                     }`
-                    : 'relative bg-pink-600 shadow-sm'
+                    : 'relative bg-[#FF5087] shadow-sm'
                     }`}
                 onMouseLeave={closeDropdown}
             >
@@ -107,11 +107,11 @@ export default function CategoryBar({ initialCategories = [] }: CategoryBarProps
                         {canScrollLeft && (
                             <button
                                 onClick={() => scroll('left')}
-                                className="absolute left-0 z-10 h-[50px] 2xl:h-[62px] w-12 flex items-center justify-start pl-1 cursor-pointer bg-gradient-to-r from-pink-600 via-pink-600/95 to-transparent"
+                                className="absolute left-0 z-10 h-[50px] 2xl:h-[62px] w-12 flex items-center justify-start pl-1 cursor-pointer bg-gradient-to-r from-[#FF5087] via-[#FF5087]/95 to-transparent"
                                 aria-label="Scroll left"
                             >
-                                <div className="w-8 h-8 rounded-full bg-pink-500 shadow-md border border-pink-400 flex items-center justify-center hover:bg-pink-400 hover:scale-105 transition-all duration-200">
-                                    <ChevronLeft className="w-4 h-4 text-pink-50" />
+                                <div className="w-8 h-8 rounded-full bg-white/10 shadow-md border border-white/20 flex items-center justify-center hover:bg-white/20 hover:scale-105 transition-all duration-200">
+                                    <ChevronLeft className="w-4 h-4 text-white" />
                                 </div>
                             </button>
                         )}
@@ -137,13 +137,13 @@ export default function CategoryBar({ initialCategories = [] }: CategoryBarProps
                                             href={`/products?category=${cat.slug}`}
                                             className={`flex items-center gap-1.5 px-3.5 py-1.5 2xl:px-4 2xl:py-2 text-[13px] 2xl:text-base font-medium whitespace-nowrap transition-all duration-200 rounded-lg ${isHovered
                                                 ? 'text-white bg-white/20 shadow-sm'
-                                                : 'text-pink-100 hover:text-white hover:bg-white/20'
+                                                : 'text-white hover:text-white hover:bg-white/20'
                                                 }`}
                                             onClick={closeDropdown}
                                         >
                                             {cat.name}
                                             {hasSubs && (
-                                                <ChevronDown className={`w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-gray-400 transition-all duration-200 ${isHovered ? 'rotate-180 text-white' : ''}`} />
+                                                <ChevronDown className={`w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-white transition-all duration-200 ${isHovered ? 'rotate-180 text-white' : ''}`} />
                                             )}
                                         </Link>
                                     </div>
@@ -239,11 +239,11 @@ export default function CategoryBar({ initialCategories = [] }: CategoryBarProps
                         {canScrollRight && (
                             <button
                                 onClick={() => scroll('right')}
-                                className="absolute right-0 z-10 h-[50px] 2xl:h-[62px] w-12 flex items-center justify-end pr-1 cursor-pointer bg-gradient-to-l from-pink-600 via-pink-600/95 to-transparent"
+                                className="absolute right-0 z-10 h-[50px] 2xl:h-[62px] w-12 flex items-center justify-end pr-1 cursor-pointer bg-gradient-to-l from-[#FF5087] via-[#FF5087]/95 to-transparent"
                                 aria-label="Scroll right"
                             >
-                                <div className="w-8 h-8 rounded-full bg-pink-500 shadow-md border border-pink-400 flex items-center justify-center hover:bg-pink-400 hover:scale-105 transition-all duration-200">
-                                    <ChevronRight className="w-4 h-4 text-pink-50" />
+                                <div className="w-8 h-8 rounded-full bg-white/10 shadow-md border border-white/20 flex items-center justify-center hover:bg-white/20 hover:scale-105 transition-all duration-200">
+                                    <ChevronRight className="w-4 h-4 text-white" />
                                 </div>
                             </button>
                         )}

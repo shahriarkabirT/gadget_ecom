@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useGetPublicSettingsQuery } from "@/redux/features/settings/settingsApi";
+import { useHasMounted } from "@/hooks/useHasMounted";
 import { ISettings } from "@/types";
 import {
   Heart,
@@ -57,6 +58,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
   const { getItemCount } = useCart();
   const { wishlistCount } = useWishlist();
   const itemCount = getItemCount();
+  const mounted = useHasMounted();
 
   // Close "More" menu on outside click
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
 
   const { data: settingsData } = useGetPublicSettingsQuery(undefined);
 
-  const settings = settingsData?.settings || initialSettings;
+  const settings = { ...initialSettings, ...settingsData?.settings };
   const brandName = settings?.brandName || "Store";
 
   const logoSettings = {
@@ -231,7 +233,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
                     className="w-6 h-6 group-hover:fill-rose-500 group-hover:stroke-rose-500 transition-colors"
                     strokeWidth={1.5}
                   />
-                  {wishlistCount > 0 && (
+                  {mounted && wishlistCount > 0 && (
                     <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center ring-2 ring-white">
                       {wishlistCount}
                     </span>
@@ -261,7 +263,7 @@ export default function Navbar({ initialSettings }: NavbarProps) {
                     className="w-6 h-6 md:group-hover:text-primary transition-colors"
                     strokeWidth={1.5}
                   />
-                  {itemCount >= 0 && (
+                  {mounted && itemCount > 0 && (
                     <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center ring-2 ring-white">
                       {itemCount}
                     </span>
