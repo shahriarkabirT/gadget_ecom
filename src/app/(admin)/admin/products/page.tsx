@@ -444,22 +444,75 @@ function AdminProductsPageInner() {
 
             {pagination.pages > 1 && (
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-6">
-                    <div className="px-6 py-4 flex items-center justify-between bg-gray-50">
-                        <span className="text-sm text-gray-500">
-                            Page {page} of {pagination.pages}
-                        </span>
-                        <div className="flex gap-2">
+                    <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between bg-gray-50 gap-4">
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm text-gray-500">
+                                Page {page} of {pagination.pages}
+                            </span>
+                            <div className="flex items-center gap-1.5 border-l pl-3 border-gray-300">
+                                <span className="text-sm text-gray-500">Go to:</span>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={pagination.pages}
+                                    defaultValue={page}
+                                    key={`page-input-${page}`}
+                                    onBlur={(e) => {
+                                        const p = parseInt(e.target.value);
+                                        if (p >= 1 && p <= pagination.pages && p !== page) {
+                                            setPage(p);
+                                        } else {
+                                            e.target.value = page.toString();
+                                        }
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.currentTarget.blur();
+                                        }
+                                    }}
+                                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:border-[#FF5087] focus:ring-1 focus:ring-[#FF5087] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setPage(page - 1)}
                                 disabled={page <= 1}
-                                className="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                                className="px-3 py-1.5 bg-white border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                             >
                                 Previous
                             </button>
+                            
+                            <div className="hidden md:flex gap-1">
+                                {Array.from({ length: pagination.pages }, (_, i) => i + 1)
+                                    .filter(p => p === 1 || p === pagination.pages || Math.abs(p - page) <= 2)
+                                    .map((p, i, arr) => {
+                                        const elements = [];
+                                        if (i > 0 && arr[i - 1] !== p - 1) {
+                                            elements.push(<span key={`ellipsis-${p}`} className="px-2 py-1 text-gray-400">...</span>);
+                                        }
+                                        elements.push(
+                                            <button
+                                                key={p}
+                                                onClick={() => setPage(p)}
+                                                className={`px-3 py-1.5 border rounded text-sm transition-colors ${
+                                                    page === p 
+                                                    ? 'bg-[#FF5087] border-[#FF5087] text-white font-medium shadow-sm' 
+                                                    : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                                                }`}
+                                            >
+                                                {p}
+                                            </button>
+                                        );
+                                        return elements;
+                                    })
+                                }
+                            </div>
+
                             <button
                                 onClick={() => setPage(page + 1)}
                                 disabled={page >= pagination.pages}
-                                className="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                                className="px-3 py-1.5 bg-white border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                             >
                                 Next
                             </button>
