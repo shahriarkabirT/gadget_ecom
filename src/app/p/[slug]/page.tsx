@@ -20,14 +20,32 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 
     const product = landing.product as any;
+    
+    // Prioritize landing page banner, then product image, and ensure absolute URL for OpenGraph
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdgirls.xyz';
+    const imageUrl = landing.bannerImage || product?.images?.[0];
+    const absoluteImageUrl = imageUrl 
+        ? (imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`)
+        : undefined;
+        
+    const title = landing.customTitle || product.title;
+    const description = landing.customDescription || product.shortDescription || product.title;
+
     return {
-        title: landing.customTitle || product.title,
-        description: landing.customDescription || product.shortDescription || product.title,
+        title,
+        description,
         openGraph: {
-            title: landing.customTitle || product.title,
+            title,
             description: landing.customDescription || product.shortDescription || '',
-            images: product.images?.[0] ? [{ url: product.images[0] }] : [],
+            images: absoluteImageUrl ? [{ url: absoluteImageUrl, width: 1200, height: 630 }] : [],
+            type: 'website',
         },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description: landing.customDescription || product.shortDescription || '',
+            images: absoluteImageUrl ? [absoluteImageUrl] : [],
+        }
     };
 }
 

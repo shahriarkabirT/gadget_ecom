@@ -43,7 +43,15 @@ export async function generateMetadata({ params }) {
 
     const title = `${data.product.title} - Store`;
     const description = data.product.shortDescription || data.product.title;
-    const images = data.product.images?.[0] ? [{ url: data.product.images[0] }] : [];
+    
+    // Ensure absolute URL for OpenGraph images
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdgirls.xyz';
+    const imageUrl = data.product.images?.[0];
+    const absoluteImageUrl = imageUrl 
+        ? (imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`)
+        : undefined;
+
+    const images = absoluteImageUrl ? [{ url: absoluteImageUrl, width: 1200, height: 630 }] : [];
 
     return {
         title,
@@ -58,7 +66,7 @@ export async function generateMetadata({ params }) {
             card: 'summary_large_image',
             title,
             description,
-            images,
+            images: absoluteImageUrl ? [absoluteImageUrl] : [],
         }
     };
 }
