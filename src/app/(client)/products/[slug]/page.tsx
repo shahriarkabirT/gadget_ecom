@@ -42,7 +42,8 @@ export async function generateMetadata({ params }) {
     }
 
     const title = `${data.product.title} - Store`;
-    const description = data.product.shortDescription || data.product.title;
+    const rawDescription = data.product.shortDescription || data.product.title || '';
+    const description = typeof rawDescription === 'string' ? rawDescription.replace(/<[^>]*>?/gm, '').trim() : rawDescription;
     
     // Ensure absolute URL for OpenGraph images
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdgirls.xyz';

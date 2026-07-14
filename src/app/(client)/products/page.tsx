@@ -2,11 +2,47 @@ import ProductFilters from '@/components/client/ProductFilters';
 import ProductGrid from '@/components/client/ProductGrid';
 import Link from 'next/link';
 import ProductToolbar from '@/components/client/ProductToolbar';
+import dbConnect from '@/lib/db';
+import Category from '@/models/Category';
 
-export const metadata = {
-    title: 'Explore Our Collection',
-    description: 'Discover luxury products at unbeatable prices. Shop our latest arrivals and exclusive deals.',
-};
+export async function generateMetadata({ searchParams }: { searchParams: any }) {
+    const params = await searchParams;
+    let title = 'Explore Our Collection | bdgirls';
+    let description = 'Discover luxury products at unbeatable prices. Shop our latest arrivals and exclusive deals.';
+    
+    if (params?.category) {
+        try {
+            await dbConnect();
+            const categoryObj = await Category.findOne({ slug: params.category }).lean() as any;
+            if (categoryObj) {
+                title = categoryObj.metaTitle || `${categoryObj.name} Collection | bdgirls`;
+                description = categoryObj.metaDescription || categoryObj.description || `Browse our exclusive collection of ${categoryObj.name}. Discover premium quality products at the best prices.`;
+            } else {
+                const formattedCat = params.category.replace(/-/g, ' ');
+                title = `${formattedCat.charAt(0).toUpperCase() + formattedCat.slice(1)} | bdgirls`;
+            }
+        } catch (error) {
+            console.error("Failed to fetch category metadata:", error);
+        }
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdgirls.xyz';
+    const canonicalUrl = params?.category ? `${baseUrl}/products?category=${params.category}` : `${baseUrl}/products`;
+
+    return {
+        title,
+        description,
+        alternates: {
+            canonical: canonicalUrl,
+        },
+        openGraph: {
+            title,
+            description,
+            url: canonicalUrl,
+            type: 'website',
+        }
+    };
+}
 
 export default async function ProductsPage({ searchParams }: { searchParams: any }) {
     const params = await searchParams;

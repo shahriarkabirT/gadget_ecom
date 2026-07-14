@@ -29,21 +29,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         : undefined;
         
     const title = landing.customTitle || product.title;
-    const description = landing.customDescription || product.shortDescription || product.title;
+    const rawDescription = landing.customDescription || product.shortDescription || product.title || '';
+    const description = typeof rawDescription === 'string' ? rawDescription.replace(/<[^>]*>?/gm, '').trim() : rawDescription;
 
     return {
         title,
         description,
         openGraph: {
             title,
-            description: landing.customDescription || product.shortDescription || '',
+            description,
             images: absoluteImageUrl ? [{ url: absoluteImageUrl, width: 1200, height: 630 }] : [],
             type: 'website',
         },
         twitter: {
             card: 'summary_large_image',
             title,
-            description: landing.customDescription || product.shortDescription || '',
+            description,
             images: absoluteImageUrl ? [absoluteImageUrl] : [],
         }
     };
